@@ -39,7 +39,7 @@ The full research base, caveats (including what remains uncertain), and the safe
 - Self-tracking with free validated instruments (K-10, PHQ-9, GAD-7, SCS-SF) and longitudinal progress views
 - Safety audit logging and pre-specified adverse-event monitoring
 
-> **None of these are shipped yet.** This repository currently contains planning and research documentation only. No implementation code exists.
+> **None of these are user-facing yet.** Pipeline components are under active, test-driven development (see Roadmap below); there is no complete product, no release, and no service.
 
 ## Project status
 
@@ -50,7 +50,7 @@ The full research base, caveats (including what remains uncertain), and the safe
 | Phase | Scope | Status |
 |-------|-------|--------|
 | Stage 0 | Repository scaffold, test harness, CI, security baseline | **Complete** |
-| Stage 1 | Safety layer: input risk classifier, deterministic escalation policy, crisis-query audit harness | Planned |
+| Stage 1 | Safety layer: input risk classifier, deterministic escalation policy, crisis-query audit harness | **Complete** |
 | Stage 2 | Conversation core: retrieval over curated library, constrained generation, output filter | Planned |
 | Stage 3 | Intervention modules: rumination, behavioral activation, self-compassion exercises | Planned |
 | Stage 4 | Measurement: validated self-report instruments and longitudinal tracking | Planned |

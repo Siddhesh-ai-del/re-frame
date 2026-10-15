@@ -1,0 +1,246 @@
+[
+  {
+    "id": "rumination-postponement",
+    "title": "Postpone your rumination window",
+    "summary": "Park repetitive thoughts in one fixed daily window so they stop running the rest of your day.",
+    "category": "rumination",
+    "tier": "A",
+    "safety_class": "self_help_safe",
+    "early_worsening_notice": true,
+    "steps": [
+      "Notice when the same thought keeps coming back.",
+      "Write that thought down in one short sentence.",
+      "Tell yourself you will think about it later, at a time you choose.",
+      "Pick a fixed 15-minute window today as your thinking time.",
+      "When the thought returns before then, say 'later' and go back to what you were doing."
+    ],
+    "sources": [
+      "Stenzel et al. 2025, Psychological Medicine (meta-analysis: rumination-focused interventions)"
+    ]
+  },
+  {
+    "id": "concreteness-training",
+    "title": "Move from 'why' to 'what' and 'how'",
+    "summary": "Shift abstract 'why' questions into concrete facts and next steps you can actually act on.",
+    "category": "rumination",
+    "tier": "A",
+    "safety_class": "self_help_safe",
+    "early_worsening_notice": true,
+    "steps": [
+      "Write down the 'why' question your mind keeps asking.",
+      "Rewrite it as a 'what happened' question with specific facts.",
+      "List two concrete details you can point to, not interpretations.",
+      "Ask 'what is one small next step' instead of 'why does this keep happening'.",
+      "Read your concrete version aloud once."
+    ],
+    "sources": [
+      "Stenzel et al. 2025, Psychological Medicine (meta-analysis: rumination-focused interventions)"
+    ]
+  },
+  {
+    "id": "attention-shift-refocus",
+    "title": "Notice the loop, then refocus",
+    "summary": "Catch rumination in the act and deliberately point your attention at something engaging.",
+    "category": "rumination",
+    "tier": "A",
+    "safety_class": "self_help_safe",
+    "early_worsening_notice": true,
+    "steps": [
+      "Name it when you notice it: 'I am ruminating again'.",
+      "Stop and take one slow breath.",
+      "Choose an activity that holds your attention for a few minutes.",
+      "Give that activity your full focus, minute by minute.",
+      "If the loop returns, notice it again and redirect once more."
+    ],
+    "sources": [
+      "Stenzel et al. 2025, Psychological Medicine (meta-analysis: rumination-focused interventions)",
+      "NICE NG222 depression in adults (2022)"
+    ]
+  },
+  {
+    "id": "activity-scheduling",
+    "title": "Schedule small activities",
+    "summary": "Plan small, concrete activities for the coming days — one for mastery, one for pleasure — and do them.",
+    "category": "behavioral_activation",
+    "tier": "A",
+    "safety_class": "self_help_safe",
+    "early_worsening_notice": true,
+    "steps": [
+      "Open your calendar for the next three days.",
+      "Choose one small task that gives a sense of accomplishment.",
+      "Choose one small activity you usually enjoy.",
+      "Write both into specific time slots.",
+      "After each one, mark whether you did it and how it felt."
+    ],
+    "sources": [
+      "NICE NG222 depression in adults (2022)",
+      "Tong et al. 2024, EBioMedicine (meta-analysis: self-guided digital interventions)"
+    ]
+  },
+  {
+    "id": "values-direction-step",
+    "title": "Take one values-direction step",
+    "summary": "Pick one direction that matters to you and take one small step toward it today.",
+    "category": "behavioral_activation",
+    "tier": "A",
+    "safety_class": "self_help_safe",
+    "early_worsening_notice": true,
+    "steps": [
+      "Name one area of life that matters to you: relationships, work, health, or play.",
+      "Picture what acting on that value would look like this week.",
+      "Shrink it to a step you can finish in ten minutes.",
+      "Do the step now, or put it in your calendar.",
+      "Write one sentence about what it was like."
+    ],
+    "sources": [
+      "NICE NG222 depression in adults (2022)",
+      "Tong et al. 2024, EBioMedicine (meta-analysis: self-guided digital interventions)"
+    ]
+  },
+  {
+    "id": "mood-activity-mapping",
+    "title": "Map mood to activity",
+    "summary": "Track the link between what you do and how you feel, then repeat the activities that help.",
+    "category": "behavioral_activation",
+    "tier": "A",
+    "safety_class": "self_help_safe",
+    "early_worsening_notice": true,
+    "steps": [
+      "Three times today, note what you are doing and rate your mood from 0 to 10.",
+      "Keep each entry short and specific.",
+      "At day's end, circle the activities that came with a higher mood.",
+      "Underline the activities that came with a lower mood.",
+      "Plan to repeat one helpful activity tomorrow."
+    ],
+    "sources": [
+      "NICE NG222 depression in adults (2022)",
+      "Tong et al. 2024, EBioMedicine (meta-analysis: self-guided digital interventions)"
+    ]
+  },
+  {
+    "id": "self-compassion-break",
+    "title": "Take a self-compassion break",
+    "summary": "Meet a hard moment with three simple lines: acknowledge it, remember you are not alone, offer yourself kindness.",
+    "category": "self_compassion",
+    "tier": "A",
+    "safety_class": "self_help_safe",
+    "early_worsening_notice": true,
+    "contraindications": [
+      "This exercise is not for processing traumatic memories; if trauma memories surface, pause and seek support from a professional."
+    ],
+    "steps": [
+      "Stop and say to yourself: 'this is a hard moment'.",
+      "Say: 'hard moments happen to everyone'.",
+      "Say: 'may I be kind to myself right now'.",
+      "Rest a hand on your chest if it helps the words feel real.",
+      "Repeat once whenever the harshness returns."
+    ],
+    "sources": [
+      "Krieger et al. 2019 (online compassion training for self-criticism)",
+      "Tong et al. 2024, EBioMedicine (meta-analysis: self-guided digital interventions)"
+    ]
+  },
+  {
+    "id": "self-criticism-noticing",
+    "title": "Notice the harsh inner voice",
+    "summary": "Catch and name the harsh inner voice so it has less say over your next action.",
+    "category": "self_compassion",
+    "tier": "B",
+    "safety_class": "self_help_safe",
+    "early_worsening_notice": true,
+    "contraindications": [
+      "This exercise can surface painful self-judgements; if distress rises, pause and seek support from a professional."
+    ],
+    "steps": [
+      "Catch the moment your inner voice turns harsh.",
+      "Write down the exact sentence it said.",
+      "Label it: 'that is self-criticism'.",
+      "Ask what you would say to a friend in the same spot.",
+      "Say that sentence to yourself once, out loud."
+    ],
+    "sources": [
+      "Krieger et al. 2019 (online compassion training for self-criticism)"
+    ]
+  },
+  {
+    "id": "common-humanity-reminder",
+    "title": "Remember common humanity",
+    "summary": "Remind yourself that struggle is part of being human, not evidence of personal failure.",
+    "category": "self_compassion",
+    "tier": "B",
+    "safety_class": "self_help_safe",
+    "early_worsening_notice": true,
+    "contraindications": [
+      "This exercise is not for processing traumatic memories; if trauma memories surface, pause and seek support from a professional."
+    ],
+    "steps": [
+      "Notice the thought that you are the only one struggling.",
+      "Say: 'many people feel this way today'.",
+      "Say: 'this does not mean I am broken or failing'.",
+      "Name one person you care about who has had a hard week.",
+      "Let yourself off the hook for one small thing."
+    ],
+    "sources": [
+      "Krieger et al. 2019 (online compassion training for self-criticism)",
+      "Tong et al. 2024, EBioMedicine (meta-analysis: self-guided digital interventions)"
+    ]
+  },
+  {
+    "id": "savoring-moment",
+    "title": "Savor one moment",
+    "summary": "Slow down one pleasant moment on purpose so it actually lands in your day.",
+    "category": "emotion_regulation",
+    "tier": "B",
+    "safety_class": "self_help_safe",
+    "early_worsening_notice": true,
+    "steps": [
+      "Pick one pleasant moment you are having right now.",
+      "Slow it down: look, listen, and feel it for a full minute.",
+      "Say one sentence about why you like it.",
+      "Let the moment be good without hunting for the catch.",
+      "Write one line about it tonight."
+    ],
+    "sources": [
+      "Tong et al. 2024, EBioMedicine (meta-analysis: self-guided digital interventions)"
+    ]
+  },
+  {
+    "id": "reappraisal-shift",
+    "title": "Try another reading",
+    "summary": "Revisit a straining situation and look for one other reading of it that also fits the facts.",
+    "category": "emotion_regulation",
+    "tier": "C",
+    "safety_class": "self_help_safe",
+    "early_worsening_notice": true,
+    "steps": [
+      "Write the situation in one plain sentence.",
+      "Write the harshest interpretation you are holding about it.",
+      "Write a second interpretation that also fits the facts.",
+      "Write a third if you can, and keep only what matches the facts.",
+      "Notice which reading leaves you steadier, and choose it."
+    ],
+    "sources": [
+      "Tong et al. 2024, EBioMedicine (meta-analysis: self-guided digital interventions)"
+    ]
+  },
+  {
+    "id": "structured-problem-solving",
+    "title": "Break one problem into steps",
+    "summary": "Turn one nagging problem into a short list of doable steps instead of circling it in your head.",
+    "category": "emotion_regulation",
+    "tier": "C",
+    "safety_class": "self_help_safe",
+    "early_worsening_notice": true,
+    "steps": [
+      "Write the problem as one plain sentence.",
+      "List every possible action, however small.",
+      "Cross out the actions you cannot do right now.",
+      "Pick the first doable action and give it a time today.",
+      "Do it, then decide the next step."
+    ],
+    "sources": [
+      "NICE NG222 depression in adults (2022)",
+      "Tong et al. 2024, EBioMedicine (meta-analysis: self-guided digital interventions)"
+    ]
+  }
+]

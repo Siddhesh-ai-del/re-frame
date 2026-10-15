@@ -7,6 +7,7 @@ Documentation index for the RE:FRAME project. This project is **pre-release**: o
 | Document | Contents |
 |----------|----------|
 | [README.md](../README.md) | Product overview, principles, roadmap, architecture intent |
+| [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) | Standing direction, confirmed decisions, conventions, and current stage state — read first |
 | [CHANGELOG.md](../CHANGELOG.md) | Notable changes (Keep a Changelog format) |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | Bug reports, feature proposals, TDD and coverage standards |
 | [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) | Community standards (Contributor Covenant 2.1) |

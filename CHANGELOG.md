@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Stage 0 scaffold: `src/reframe` Python package with an immutable, environment-driven settings loader (fail-closed secret boundary — production refuses to start without its API key, and secrets are excluded from all string renderings).
+- TDD test suite: 21 tests written before implementation (RED → GREEN → refactor), 100% statement and branch coverage.
+- CI pipeline: lint (ruff), format check, strict type check (mypy), tests on Python 3.12 and 3.14, and a gitleaks secret scan.
 - Initial product repository: README, contributing guide, code of conduct, security policy, support policy, Apache-2.0 license, documentation index, and GitHub community-health templates.
 - Repository standards: conventional commits, test-driven development with an 80%+ coverage gate, and a pull-request checklist requiring a pre-commit secret scan.
 

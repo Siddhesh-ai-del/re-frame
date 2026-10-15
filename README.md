@@ -85,15 +85,25 @@ re-frame/
 ├── SUPPORT.md
 ├── LICENSE
 ├── .gitignore
+├── pyproject.toml
+├── src/
+│   └── reframe/
+│       ├── __init__.py
+│       └── config.py
+├── tests/
+│   ├── test_package.py
+│   └── test_config.py
 ├── docs/
 │   └── README.md
 └── .github/
     ├── CODEOWNERS
     ├── PULL_REQUEST_TEMPLATE.md
-    └── ISSUE_TEMPLATE/
-        ├── config.yml
-        ├── bug_report.yml
-        └── feature_request.yml
+    ├── ISSUE_TEMPLATE/
+    │   ├── config.yml
+    │   ├── bug_report.yml
+    │   └── feature_request.yml
+    └── workflows/
+        └── ci.yml
 ```
 
 ## Contributing

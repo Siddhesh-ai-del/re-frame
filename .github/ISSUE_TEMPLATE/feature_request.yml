@@ -1,0 +1,48 @@
+name: Feature request
+description: Propose a capability — problem first, solution second.
+title: "[feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the **problem before the solution**. Requests that would require diagnostic, treatment, or risk-assessment claims are out of scope by design — this project stays in the wellness lane.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user problem or workflow gap exists today? Who is affected?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like to happen? Keep this secondary to the problem.
+    validations:
+      required: true
+  - type: dropdown
+    id: principle
+    attributes:
+      label: Which principle does this advance?
+      options:
+        - Non-diagnostic by design (wellness lane, no diagnostic or treatment claims)
+        - Safety is architecture, not policy (deterministic escalation, layered filters)
+        - Evidence-tiered content (techniques mapped to A/B/C evidence tiers)
+        - Evaluate before claiming (measurement, adverse-event monitoring, pilot-first)
+        - None directly / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you evaluated and why they fall short.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I have searched existing issues and this is not a duplicate.
+          required: true
+        - label: This proposal does not require the product to diagnose, treat, or assess clinical risk.
+          required: true

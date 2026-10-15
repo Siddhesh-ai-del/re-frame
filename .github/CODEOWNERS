@@ -1,0 +1,6 @@
+# Default owner for everything in the repository.
+* @Siddhesh-ai-del
+
+# Safety-critical paths require owner review on every change.
+# These paths do not exist yet; they will be enforced from their first commit.
+/.github/ @Siddhesh-ai-del

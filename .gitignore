@@ -1,0 +1,53 @@
+# OS / editors
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+*.iml
+
+# Environment & credentials — never commit
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+credentials.json
+secrets.json
+service-account*.json
+*.keystore
+
+# Python (planned backend)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Node / tooling (planned frontend & scripts)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.pnpm-store/
+.next/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Local runtime data — conversational / health-adjacent data must never be committed
+*.log
+data/
+uploads/
+var/

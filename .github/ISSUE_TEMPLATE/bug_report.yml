@@ -1,0 +1,65 @@
+name: Bug report
+description: Report something that does not work as documented or expected.
+title: "[bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Redaction warning:** never paste API keys, tokens, credentials, real crisis transcripts, or any personal/health data. Redact usernames and identifiers before attaching logs.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Clear, concise description of the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps, commands, or test case that triggers the bug.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: Release, tag, or commit SHA where the bug occurs.
+      placeholder: main @ abc1234
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, runtime and version, model/provider if relevant.
+      placeholder: |
+        - OS:
+        - Runtime:
+        - Model/provider:
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots (redacted)
+      description: Redact secrets, personal data, and crisis content before pasting.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I have searched existing issues and this is not a duplicate.
+          required: true
+        - label: I have redacted all secrets, credentials, and personal or health-adjacent data from this report.
+          required: true
+        - label: This report contains no security vulnerability (otherwise I will use the private security advisory process).
+          required: true

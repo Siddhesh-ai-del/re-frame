@@ -53,12 +53,21 @@ before or alongside professional care. Grounded in a verified 147-source researc
 - **Stage 0 — Complete:** repository scaffold, test harness, CI pipeline, security baseline.
 - **Stage 1 — Complete:** `reframe.safety` — deterministic input classifier (23 rules),
   fixed escalation policy table (hard bypass / human review / proceed), real crisis
-  resources, crisis-query audit harness (recall target 1.0). 136 tests, 100% statement and
-  branch coverage. CI green.
-- **Next: Stage 2 — conversation core,** to be split into sub-stages:
-  (a) curated evidence-tiered content library + retrieval, (b) constrained generation,
-  (c) Layer-5 output filter (twin of the input classifier: diagnosis, treatment advice,
-  professional impersonation, sycophancy).
+  resources, crisis-query audit harness (recall target 1.0).
+- **Stage 2 — Complete (sub-staged 2a/2b/2c):** `reframe.content` (12 evidence-tiered
+  exercise modules + deterministic rule-matched retrieval + wellness-lane content lint),
+  `reframe.generation` (nine system-prompt red lines, provider-agnostic OpenAI-compatible
+  client, network-free tests), `reframe.pipeline` (Layer-5 output filter + orchestration:
+  safety decides before generation; model never called on crisis/review routes).
+- **Stage 3 — Complete:** intervention delivery through the pipeline (exercises served
+  in-conversation; covered by 2a/2c work).
+- **Test suite:** 400 tests, 100% statement and branch coverage; CI green (ruff, mypy
+  strict, Python 3.12 + 3.14 matrix, gitleaks).
+- **Next: Stage 4 — measurement** (validated instruments K-10, PHQ-9, GAD-7, SCS-SF:
+  item definitions, scoring logic, longitudinal tracking), then Stage 5 FastAPI service,
+  Stage 6 web app (chat UI, onboarding, PWA — tested end-to-end before any Android work),
+  Stage 7 evaluation harness, Stage 8 Android client. See README roadmap for the
+  authoritative stage table.
 - **Housekeeping (decided 2026-10-15):** research files (`distress-management-pipeline.md`,
   `.provenance.md`) are intentionally untracked in the repo root; `.drafts/` and `.plans/`
   are git-ignored working artifacts. The old docs-only clone at `/home/siddhesh/re-frame/`

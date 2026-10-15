@@ -51,10 +51,13 @@ The full research base, caveats (including what remains uncertain), and the safe
 |-------|-------|--------|
 | Stage 0 | Repository scaffold, test harness, CI, security baseline | **Complete** |
 | Stage 1 | Safety layer: input risk classifier, deterministic escalation policy, crisis-query audit harness | **Complete** |
-| Stage 2 | Conversation core: retrieval over curated library, constrained generation, output filter | Planned |
-| Stage 3 | Intervention modules: rumination, behavioral activation, self-compassion exercises | Planned |
-| Stage 4 | Measurement: validated self-report instruments and longitudinal tracking | Planned |
-| Stage 5 | Evaluation harness: adverse-event logging, feasibility-pilot instrumentation and reporting | Planned |
+| Stage 2 | Conversation core: content library + retrieval, constrained generation, output filter, pipeline orchestration | **Complete** |
+| Stage 3 | Intervention delivery: evidence-tiered exercise library served through the pipeline (rumination, behavioral activation, self-compassion, emotion regulation) | **Complete** |
+| Stage 4 | Measurement: validated self-report instruments (K-10, PHQ-9, GAD-7, SCS-SF), scoring, and longitudinal tracking | Planned |
+| Stage 5 | API service (FastAPI) exposing the conversation pipeline and measurement endpoints | Planned |
+| Stage 6 | Web application: chat interface, onboarding, tracking views, PWA — built and tested end-to-end before any native client | Planned |
+| Stage 7 | Evaluation harness: adverse-event logging, feasibility-pilot instrumentation and reporting | Planned |
+| Stage 8 | Android client, reusing the proven API (after the web app is tested end-to-end) | Planned |
 
 Each stage follows test-driven development (tests first, 80%+ coverage gate) and is pushed only after its stage tests pass.
 
@@ -72,7 +75,7 @@ RE:FRAME is intended to be built as a layered pipeline in which safety layers br
 4. **Output safety layer** — independent filter that catches escalation-worthy content, boundary violations, and sycophancy before a reply is delivered.
 5. **Escalation path** — deterministic, non-negotiable: scripted crisis resources and referral prompts; no risk-score stratification (in line with NICE NG225 guidance against risk scales for prediction or categorization).
 
-This section describes intent, not implemented components.
+**Status:** the safety, retrieval, generation, and filtering layers exist today as tested backend components (see Repository layout); the API service and web interface that expose them are still planned.
 
 ## Repository layout
 
@@ -91,19 +94,39 @@ re-frame/
 │   └── reframe/
 │       ├── __init__.py
 │       ├── config.py
-│       └── safety/
+│       ├── safety/
+│       │   ├── __init__.py
+│       │   ├── types.py
+│       │   ├── classifier.py
+│       │   ├── escalation.py
+│       │   ├── resources.py
+│       │   └── audit.py
+│       ├── content/
+│       │   ├── __init__.py
+│       │   ├── schema.py
+│       │   ├── library.py
+│       │   ├── matching.py
+│       │   ├── retrieval.py
+│       │   └── data/
+│       │       └── exercises.json
+│       ├── generation/
+│       │   ├── __init__.py
+│       │   ├── client.py
+│       │   ├── prompts.py
+│       │   ├── openai_client.py
+│       │   └── generator.py
+│       └── pipeline/
 │           ├── __init__.py
-│           ├── types.py
-│           ├── classifier.py
-│           ├── escalation.py
-│           ├── resources.py
-│           └── audit.py
+│           ├── output_filter.py
+│           ├── messages.py
+│           └── pipeline.py
 ├── tests/
 │   ├── test_package.py
 │   ├── test_config.py
-│   ├── test_safety_classifier.py
-│   ├── test_safety_escalation.py
-│   ├── test_safety_audit.py
+│   ├── test_safety_*.py
+│   ├── test_content_*.py
+│   ├── test_generation_*.py
+│   ├── test_pipeline_*.py
 │   └── data/
 │       └── audit_corpus.json
 ├── docs/

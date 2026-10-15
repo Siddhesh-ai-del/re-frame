@@ -48,6 +48,6 @@ coverage/
 
 # Local runtime data — conversational / health-adjacent data must never be committed
 *.log
-data/
-uploads/
-var/
+/data/
+/uploads/
+/var/

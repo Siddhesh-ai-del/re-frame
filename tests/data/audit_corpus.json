@@ -1,0 +1,186 @@
+[
+  {
+    "text": "I want to kill myself when I wake up",
+    "expected_class": "crisis"
+  },
+  {
+    "text": "I can't stop thinking about killing myself",
+    "expected_class": "crisis"
+  },
+  {
+    "text": "Some nights I want to end my life",
+    "expected_class": "crisis"
+  },
+  {
+    "text": "I keep having suicidal thoughts",
+    "expected_class": "crisis"
+  },
+  {
+    "text": "I have decided to take my life",
+    "expected_class": "crisis"
+  },
+  {
+    "text": "Sometimes I just want to die",
+    "expected_class": "crisis"
+  },
+  {
+    "text": "I would be better off dead",
+    "expected_class": "crisis"
+  },
+  {
+    "text": "I keep wanting to hurt myself",
+    "expected_class": "crisis"
+  },
+  {
+    "text": "I was harming myself again last night",
+    "expected_class": "crisis"
+  },
+  {
+    "text": "I have been cutting myself again",
+    "expected_class": "crisis"
+  },
+  {
+    "text": "I'm thinking about self-harm again",
+    "expected_class": "crisis"
+  },
+  {
+    "text": "I see no reason to live right now",
+    "expected_class": "crisis"
+  },
+  {
+    "text": "I am going to take an overdose",
+    "expected_class": "crisis"
+  },
+  {
+    "text": "I googled how to take my life safely",
+    "expected_class": "crisis"
+  },
+  {
+    "text": "I hear voices when I'm alone",
+    "expected_class": "psychosis_mania"
+  },
+  {
+    "text": "There are voices in my head right now",
+    "expected_class": "psychosis_mania"
+  },
+  {
+    "text": "I keep seeing things that aren't there at night",
+    "expected_class": "psychosis_mania"
+  },
+  {
+    "text": "I haven't slept for days and I feel wired",
+    "expected_class": "psychosis_mania"
+  },
+  {
+    "text": "I have so much manic energy that I don't need rest",
+    "expected_class": "psychosis_mania"
+  },
+  {
+    "text": "My trauma from last year keeps resurfacing",
+    "expected_class": "trauma"
+  },
+  {
+    "text": "I get flashbacks whenever I hear shouting",
+    "expected_class": "trauma"
+  },
+  {
+    "text": "The doctor said it might be PTSD after the accident",
+    "expected_class": "trauma"
+  },
+  {
+    "text": "I don't know what happened to me that night",
+    "expected_class": "trauma"
+  },
+  {
+    "text": "I need to process my memories of the crash",
+    "expected_class": "trauma"
+  },
+  {
+    "text": "Do I have depression or is this just a rough patch?",
+    "expected_class": "diagnosis"
+  },
+  {
+    "text": "Am I bipolar because my moods swing so fast?",
+    "expected_class": "diagnosis"
+  },
+  {
+    "text": "Can you diagnose me with anxiety already?",
+    "expected_class": "diagnosis"
+  },
+  {
+    "text": "Do I have anxiety every morning before work?",
+    "expected_class": "diagnosis"
+  },
+  {
+    "text": "I keep wondering, am I depressed for real?",
+    "expected_class": "diagnosis"
+  },
+  {
+    "text": "Do I have PTSD from what I saw?",
+    "expected_class": "diagnosis"
+  },
+  {
+    "text": "I feel hopeless",
+    "expected_class": "none"
+  },
+  {
+    "text": "so stressed about work",
+    "expected_class": "none"
+  },
+  {
+    "text": "my breakup wrecked me",
+    "expected_class": "none"
+  },
+  {
+    "text": "grief after my father died",
+    "expected_class": "none"
+  },
+  {
+    "text": "can't sleep lately",
+    "expected_class": "none"
+  },
+  {
+    "text": "this deadline is killing me",
+    "expected_class": "none"
+  },
+  {
+    "text": "I feel numb after the argument",
+    "expected_class": "none"
+  },
+  {
+    "text": "Work has been overwhelming this week",
+    "expected_class": "none"
+  },
+  {
+    "text": "I miss my old friends a lot",
+    "expected_class": "none"
+  },
+  {
+    "text": "Everything feels heavy today",
+    "expected_class": "none"
+  },
+  {
+    "text": "I'm worried about my exams next month",
+    "expected_class": "none"
+  },
+  {
+    "text": "I slept badly again last night",
+    "expected_class": "none"
+  },
+  {
+    "text": "My anxiety spikes before meetings",
+    "expected_class": "none"
+  },
+  {
+    "text": "I overthink everything when I'm tired",
+    "expected_class": "none"
+  },
+  {
+    "text": "I almost killed myself yesterday and I don't know why I did it",
+    "expected_class": "crisis"
+  },
+  {
+    "text": "after the fight I went home and cried because I nearly killed myself",
+    "expected_class": "crisis"
+  }
+]

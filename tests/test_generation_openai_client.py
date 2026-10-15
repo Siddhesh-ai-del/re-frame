@@ -13,7 +13,7 @@ from reframe.generation.client import GenerationError, GenerationRequest, Genera
 from reframe.generation.openai_client import OpenAICompatibleClient
 
 BASE_URL = "https://llm.example.test/v1"
-API_KEY = "sk-test-abcdef-123456"
+API_KEY = "unit-test-key-fake-0000-not-a-real-secret"
 MODEL = "test-model"
 SYSTEM_PROMPT_LINE = "You are a wellness companion for adults, not a healthcare professional."
 CONTEXT_BLOCK = "Exercise id: attention-shift-refocus\nSteps:\n1. Notice the loop."

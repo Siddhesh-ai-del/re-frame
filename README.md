@@ -2,6 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-0F172A?style=for-the-badge&labelColor=0F172A&logo=apache&logoColor=white)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Pre--release-0F172A?style=for-the-badge&labelColor=0F172A&logo=rocket&logoColor=white)](#project-status)
+[![CI](https://img.shields.io/github/actions/workflow/status/Siddhesh-ai-del/re-frame/ci.yml?style=for-the-badge&label=CI&labelColor=0F172A&color=0F172A&logo=githubactions&logoColor=white&event=push)](../../actions/workflows/ci.yml)
 [![Platform](https://img.shields.io/badge/Platform-Web-0F172A?style=for-the-badge&labelColor=0F172A&logo=googlechrome&logoColor=white)](#planned-capabilities)
 
 **An evidence-based, non-diagnostic chatbot-first wellness tool for adults managing rumination, painful memories, self-harshness, and early depressive distress — before or alongside professional care.**
@@ -48,7 +49,7 @@ The full research base, caveats (including what remains uncertain), and the safe
 
 | Phase | Scope | Status |
 |-------|-------|--------|
-| Stage 0 | Repository scaffold, test harness, CI, security baseline | Planned |
+| Stage 0 | Repository scaffold, test harness, CI, security baseline | **Complete** |
 | Stage 1 | Safety layer: input risk classifier, deterministic escalation policy, crisis-query audit harness | Planned |
 | Stage 2 | Conversation core: retrieval over curated library, constrained generation, output filter | Planned |
 | Stage 3 | Intervention modules: rumination, behavioral activation, self-compassion exercises | Planned |

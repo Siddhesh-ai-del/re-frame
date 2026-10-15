@@ -90,10 +90,22 @@ re-frame/
 ├── src/
 │   └── reframe/
 │       ├── __init__.py
-│       └── config.py
+│       ├── config.py
+│       └── safety/
+│           ├── __init__.py
+│           ├── types.py
+│           ├── classifier.py
+│           ├── escalation.py
+│           ├── resources.py
+│           └── audit.py
 ├── tests/
 │   ├── test_package.py
-│   └── test_config.py
+│   ├── test_config.py
+│   ├── test_safety_classifier.py
+│   ├── test_safety_escalation.py
+│   ├── test_safety_audit.py
+│   └── data/
+│       └── audit_corpus.json
 ├── docs/
 │   └── README.md
 └── .github/

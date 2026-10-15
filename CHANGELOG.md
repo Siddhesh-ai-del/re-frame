@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Stage 1 safety layer (`reframe.safety`): deterministic, rule-based input classifier (23 compiled-regex rules across crisis, psychosis/mania, trauma-processing, and diagnosis-seeking signals), a fixed escalation policy table (HIGH_RISK → hard bypass with scripted crisis resources; REVIEW → human review queue; NORMAL → proceed), real crisis-resource references, and a pre-specified crisis-query audit harness (target recall 1.0, enforced by tests over a 46-case corpus). Fail-closed by design: over-flagging is the accepted direction of error; the generative model never participates in escalation decisions. 136 tests, 100% statement and branch coverage.
 - Stage 0 scaffold: `src/reframe` Python package with an immutable, environment-driven settings loader (fail-closed secret boundary — production refuses to start without its API key, and secrets are excluded from all string renderings).
 - TDD test suite: 21 tests written before implementation (RED → GREEN → refactor), 100% statement and branch coverage.
 - CI pipeline: lint (ruff), format check, strict type check (mypy), tests on Python 3.12 and 3.14, and a gitleaks secret scan.

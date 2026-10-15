@@ -26,7 +26,7 @@ packages = ["src/reframe"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-addopts = "--cov=reframe --cov-report=term-missing --cov-fail-under=80 -q"
+addopts = "--cov=reframe --cov-report=term-missing --cov-fail-under=100 -q"
 
 [tool.coverage.run]
 branch = true

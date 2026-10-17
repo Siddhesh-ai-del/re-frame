@@ -53,7 +53,7 @@ The full research base, caveats (including what remains uncertain), and the safe
 | Stage 1 | Safety layer: input risk classifier, deterministic escalation policy, crisis-query audit harness | **Complete** |
 | Stage 2 | Conversation core: content library + retrieval, constrained generation, output filter, pipeline orchestration | **Complete** |
 | Stage 3 | Intervention delivery: evidence-tiered exercise library served through the pipeline (rumination, behavioral activation, self-compassion, emotion regulation) | **Complete** |
-| Stage 4 | Measurement: validated self-report instruments (K-10, PHQ-9, GAD-7, SCS-SF), scoring, and longitudinal tracking | Planned |
+| Stage 4 | Measurement: validated self-report instruments (K-10, PHQ-9, GAD-7, SCS-SF), scoring, and longitudinal tracking | **Complete** |
 | Stage 5 | API service (FastAPI) exposing the conversation pipeline and measurement endpoints | Planned |
 | Stage 6 | Web application: chat interface, onboarding, tracking views, PWA — built and tested end-to-end before any native client | Planned |
 | Stage 7 | Evaluation harness: adverse-event logging, feasibility-pilot instrumentation and reporting | Planned |

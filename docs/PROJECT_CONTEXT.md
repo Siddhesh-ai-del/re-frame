@@ -1,7 +1,7 @@
 # Project Context & Standing Direction
 
 **Read this first in every session working on RE:FRAME.** It records user-confirmed
-direction, non-negotiable rules, and current project state. Last updated: 2026-10-15.
+direction, non-negotiable rules, and current project state. Last updated: 2026-10-17.
 
 ## What this is
 
@@ -61,12 +61,21 @@ before or alongside professional care. Grounded in a verified 147-source researc
   safety decides before generation; model never called on crisis/review routes).
 - **Stage 3 — Complete:** intervention delivery through the pipeline (exercises served
   in-conversation; covered by 2a/2c work).
-- **Test suite:** 400 tests, 100% statement and branch coverage; CI green (ruff, mypy
+- **Stage 4 — Complete (sub-staged 4a/4b):** `reframe.measurement` — verbatim PHQ-9,
+  GAD-7, K-10 instruments with fail-closed scoring and band-partition tests; SCS-SF held
+  fail-closed in pending-verification until its item wording is checked against Neff 2011;
+  longitudinal CheckInTracker with PHQ-9 item-9 escalation, early-worsening AE signals
+  (provisional thresholds, NICE NG222 1.2.10), persistent >=16 referral prompts (1.4.3);
+  routing bridges check-in flags onto the pipeline's escalation vocabulary.
+- **Test suite:** 542 tests, 100% statement and branch coverage; CI green (ruff, mypy
   strict, Python 3.12 + 3.14 matrix, gitleaks).
-- **Next: Stage 4 — measurement** (validated instruments K-10, PHQ-9, GAD-7, SCS-SF:
-  item definitions, scoring logic, longitudinal tracking), then Stage 5 FastAPI service,
-  Stage 6 web app (chat UI, onboarding, PWA — tested end-to-end before any Android work),
-  Stage 7 evaluation harness, Stage 8 Android client. See README roadmap for the
+- **Next: Stage 5 — FastAPI service** exposing the conversation pipeline
+  (`ConversationPipeline.handle`) and measurement endpoints (`record check-in` →
+  `route_for_checkin`; tracker persistence decision needed — DB choice is a Stage 5
+  sub-stage decision). Then Stage 6 web app (chat UI, onboarding, PWA — tested
+  end-to-end before any Android work), Stage 7 evaluation harness, Stage 8 Android.
+  Open item for Stage 5: verify SCS-SF item wording against Neff 2011 and activate it
+  (moves from PENDING_VERIFICATION to INSTRUMENTS). See README roadmap for the
   authoritative stage table.
 - **Housekeeping (decided 2026-10-15):** research files (`distress-management-pipeline.md`,
   `.provenance.md`) are intentionally untracked in the repo root; `.drafts/` and `.plans/`

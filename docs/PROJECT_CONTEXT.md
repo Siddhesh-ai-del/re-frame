@@ -34,6 +34,28 @@ before or alongside professional care. Grounded in a verified 147-source researc
    TDD (red → green → refactor), 100% coverage on security-critical code, all CI jobs
    green, and roadmap status flips to Complete only *after* CI evidence exists.
 
+## Standing decisions (user-confirmed, 2026-10-18 — Stage 6 web design)
+
+6. **Style: calm minimal, sage-green palette.** Warm off-white paper, green-gray ink,
+   sage accent; system fonts; hairline borders over shadows; motion ≤160ms with a global
+   `prefers-reduced-motion` kill switch plus an in-app "Reduce effects" toggle.
+   Full tokens and rules: `docs/webapp-design.md` (the build reference for Stage 6).
+7. **All four component sources, all nine showcase picks** — chat bubbles + toasts,
+   focus-breath, journal card, progress ring + trend charts, dashboard shell + status
+   bars, ambient backgrounds, Liquid Glass orb, Canvas frost/clouds ambience, Text
+   Reel/Flip Text headings — adapted to our tokens, origin-commented, reduced-motion
+   gated.
+8. **Licenses verified:** opensourceui.in, ObsidianUI, `@samasante/liquid-glass`,
+   lucide-react = MIT. **Canvas UI = MIT + Commons Clause** → handled by the user's
+   choice: vendored under `web/vendored/canvas-ui/` with its LICENSE copy and an
+   explicit NOTICE that those files are NOT Apache-2.0; product use only, never
+   redistributed as components.
+9. **UI safety rules are non-negotiable:** escalation is never toast-only (crisis =
+   persistent banner + always-visible resources); frontend wellness-lane lint mirrors
+   the backend banned-word families; score displays use published severity labels +
+   citations with **no traffic-light/risk coloring** (NG225); journal text stays on
+   device; honest error states (503 = assistant unavailable, resources still reachable).
+
 ## How we work (established conventions)
 
 - **Stack:** Python ≥ 3.11 (FastAPI planned for the API), TypeScript/React planned for
@@ -84,16 +106,15 @@ before or alongside professional care. Grounded in a verified 147-source researc
   architecture status line, layout tree (measurement/api/cli added), local-run section.
 - **Test suite:** 631 tests, 100% statement and branch coverage; CI green (ruff, mypy
   strict, Python 3.12 + 3.14 matrix, gitleaks).
-- **Next: Stage 6 — web application** (TypeScript/React chat UI, onboarding, tracking
-  views, PWA) — built and tested end-to-end (E2E via Playwright) against the Stage 5
-  API before any Android work. Decisions needed: frontend framework exact choice
-  (React per D2 plan), build tool (Vite typical), how the SPA is served (FastAPI
-  static mount vs separate dev server — note create_app currently takes no static
-  mounting; a small addition will be needed), E2E test harness in CI (Playwright
-  job). Then Stage 7 evaluation harness, Stage 8 Android.
-  Open item (was Stage 5, still open): verify SCS-SF item wording against Neff 2011
-  and activate it (move from PENDING_VERIFICATION to INSTRUMENTS). See README roadmap
-  for the authoritative stage table.
+- **Next: Stage 6 — web application** — **build strictly per `docs/webapp-design.md`**
+  (approved 2026-10-18: calm-minimal sage palette, four component sources, nine showcase
+  picks, Canvas UI vendored-with-notice, sub-stages 6a–6e: scaffold/shell → chat →
+  onboarding+exercises → check-ins+effects → PWA+serving+E2E wrap). Stack per that doc:
+  React+TS strict+Vite+Tailwind, Vitest/RTL (80% web gate), Playwright+axe E2E, OpenAPI
+  type drift test, FastAPI static mount, mock-LLM E2E via config base-url override.
+  Then Stage 7 evaluation harness, Stage 8 Android.
+  Open item carried: verify SCS-SF item wording against Neff 2011, then activate
+  in INSTRUMENTS. See README roadmap for the authoritative stage table.
 - **Housekeeping (decided 2026-10-15):** research files (`distress-management-pipeline.md`,
   `.provenance.md`) are intentionally untracked in the repo root; `.drafts/` and `.plans/`
   are git-ignored working artifacts. The old docs-only clone at `/home/siddhesh/re-frame/`

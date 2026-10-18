@@ -24,6 +24,7 @@ from reframe.generation import (
 )
 from reframe.pipeline import ConversationPipeline, PipelineOutcome
 from reframe.pipeline.messages import CRISIS_RESPONSE
+from reframe.safety.resources import DEFAULT_CRISIS_RESOURCES
 
 WELL_BEHAVED_REPLY = (
     "That loop sounds exhausting. Would you like to try one short grounding exercise "
@@ -182,6 +183,39 @@ def test_unexpected_exception_maps_to_500_without_leaking_details() -> None:
     assert response.status_code == 500
     assert response.json()["detail"] == "Internal server error."
     assert "secret-token-xyz" not in response.text
+
+
+# ---------------------------------------------------------------------------
+# Resources: standing crisis resources, served without touching the pipeline
+# ---------------------------------------------------------------------------
+
+
+def test_resources_returns_default_crisis_resources_shape_and_content() -> None:
+    client = TestClient(create_app(StubPipeline(GenerationError("must never run"))))
+    response = client.get("/resources")
+    assert response.status_code == 200
+    body = response.json()
+    assert set(body) == {"resources"}
+    assert body["resources"] == [
+        {"name": resource.name, "url": resource.url} for resource in DEFAULT_CRISIS_RESOURCES
+    ]
+
+
+def test_resources_body_carries_no_internals() -> None:
+    client = TestClient(create_app(StubPipeline(GenerationError("sk-SECRET"))))
+    response = client.get("/resources")
+    assert "sk-SECRET" not in response.text
+    for entry in response.json()["resources"]:
+        assert set(entry) == {"name", "url"}
+
+
+def test_resources_never_calls_the_pipeline_even_when_generation_fails() -> None:
+    # An exploding stub: if /resources touched the pipeline it would 503.
+    stub = StubPipeline(GenerationError("generator is down"))
+    client = TestClient(create_app(stub), raise_server_exceptions=False)
+    response = client.get("/resources")
+    assert response.status_code == 200
+    assert len(response.json()["resources"]) == len(DEFAULT_CRISIS_RESOURCES)
 
 
 # ---------------------------------------------------------------------------

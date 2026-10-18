@@ -13,9 +13,16 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 import reframe
-from reframe.api.schemas import ChatRequest, ChatResponse, HealthResponse, ResourceOut
+from reframe.api.schemas import (
+    ChatRequest,
+    ChatResponse,
+    HealthResponse,
+    ResourceOut,
+    ResourcesOut,
+)
 from reframe.generation import GenerationError
 from reframe.pipeline import ConversationPipeline, PipelineOutcome
+from reframe.safety.resources import DEFAULT_CRISIS_RESOURCES
 
 DESCRIPTION = (
     "RE:FRAME is a wellness companion API for emotional distress self-management, offering "
@@ -51,6 +58,22 @@ def create_app(pipeline: ConversationPipeline) -> FastAPI:
     @app.get("/health", response_model=HealthResponse)
     def health() -> HealthResponse:
         return HealthResponse(status="ok", version=reframe.__version__)
+
+    @app.get("/resources", response_model=ResourcesOut)
+    def resources() -> ResourcesOut:
+        """Serve the standing crisis resources.
+
+        Deliberately independent of ``pipeline`` (and therefore of the LLM):
+        these links must stay reachable even when generation is down — the UI
+        shows them on the 503 path, so this endpoint can never fail the same
+        way chat does.
+        """
+        return ResourcesOut(
+            resources=[
+                ResourceOut(name=resource.name, url=resource.url)
+                for resource in DEFAULT_CRISIS_RESOURCES
+            ]
+        )
 
     @app.post("/chat", response_model=ChatResponse)
     def chat(chat_request: ChatRequest) -> ChatResponse:

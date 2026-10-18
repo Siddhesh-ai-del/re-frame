@@ -24,6 +24,25 @@
         }
       }
     },
+    "/resources": {
+      "get": {
+        "summary": "Resources",
+        "description": "Serve the standing crisis resources.\n\nDeliberately independent of ``pipeline`` (and therefore of the LLM):\nthese links must stay reachable even when generation is down — the UI\nshows them on the 503 path, so this endpoint can never fail the same\nway chat does.",
+        "operationId": "resources_resources_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourcesOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/chat": {
       "post": {
         "summary": "Chat",
@@ -533,6 +552,23 @@
         ],
         "title": "ResourceOut",
         "description": "A named crisis resource; ``url`` is ``None`` for non-linkable guidance."
+      },
+      "ResourcesOut": {
+        "properties": {
+          "resources": {
+            "items": {
+              "$ref": "#/components/schemas/ResourceOut"
+            },
+            "type": "array",
+            "title": "Resources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resources"
+        ],
+        "title": "ResourcesOut",
+        "description": "Outbound resource list: the standing crisis resources, always available."
       },
       "SeverityBandOut": {
         "properties": {

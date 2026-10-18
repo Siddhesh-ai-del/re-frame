@@ -34,6 +34,12 @@ class ChatResponse(BaseModel):
     resources: list[ResourceOut]
 
 
+class ResourcesOut(BaseModel):
+    """Outbound resource list: the standing crisis resources, always available."""
+
+    resources: list[ResourceOut]
+
+
 class HealthResponse(BaseModel):
     """Liveness payload: service status and package version."""
 

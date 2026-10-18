@@ -16,10 +16,14 @@ import reframe
 from reframe.api.schemas import (
     ChatRequest,
     ChatResponse,
+    ExerciseListOut,
+    ExerciseOut,
     HealthResponse,
     ResourceOut,
     ResourcesOut,
 )
+from reframe.content import default_library
+from reframe.content.schema import ExerciseModule
 from reframe.generation import GenerationError
 from reframe.pipeline import ConversationPipeline, PipelineOutcome
 from reframe.safety.resources import DEFAULT_CRISIS_RESOURCES
@@ -43,6 +47,25 @@ def _to_chat_response(outcome: PipelineOutcome) -> ChatResponse:
         resources=[
             ResourceOut(name=resource.name, url=resource.url) for resource in outcome.resources
         ],
+    )
+
+
+def _to_exercise_out(module: ExerciseModule) -> ExerciseOut:
+    """Map a library module onto the wire ``ExerciseOut``.
+
+    ``safety_class`` is deliberately dropped — it is an internal routing
+    detail (self-help vs referral-only), never part of the public contract.
+    """
+    return ExerciseOut(
+        id=module.id,
+        title=module.title,
+        summary=module.summary,
+        category=module.category.value,
+        tier=module.tier.value,
+        steps=list(module.steps),
+        sources=list(module.sources),
+        contraindications=list(module.contraindications),
+        early_worsening_notice=module.early_worsening_notice,
     )
 
 
@@ -73,6 +96,20 @@ def create_app(pipeline: ConversationPipeline) -> FastAPI:
                 ResourceOut(name=resource.name, url=resource.url)
                 for resource in DEFAULT_CRISIS_RESOURCES
             ]
+        )
+
+    @app.get("/content/exercises", response_model=ExerciseListOut)
+    def content_exercises() -> ExerciseListOut:
+        """Serve the full exercise library (stage 6c).
+
+        The path is ``/content/exercises`` (not ``/exercises``) precisely
+        because the SPA owns GET ``/exercises`` — a same-path API route could
+        not be disambiguated by method the way ``POST /chat`` is. Served from
+        the packaged, cached library; no LLM involved, so it stays reachable
+        on the 503 path.
+        """
+        return ExerciseListOut(
+            exercises=[_to_exercise_out(module) for module in default_library().modules]
         )
 
     @app.post("/chat", response_model=ChatResponse)

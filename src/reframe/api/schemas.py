@@ -40,6 +40,31 @@ class ResourcesOut(BaseModel):
     resources: list[ResourceOut]
 
 
+class ExerciseOut(BaseModel):
+    """One exercise module on the wire.
+
+    Mirrors the library module exactly EXCEPT ``safety_class`` — that is an
+    internal routing decision (self-help vs referral-only) and is never
+    exposed to clients.
+    """
+
+    id: str
+    title: str
+    summary: str
+    category: str
+    tier: str
+    steps: list[str]
+    sources: list[str]
+    contraindications: list[str]
+    early_worsening_notice: bool
+
+
+class ExerciseListOut(BaseModel):
+    """The full exercise library, in declaration order."""
+
+    exercises: list[ExerciseOut]
+
+
 class HealthResponse(BaseModel):
     """Liveness payload: service status and package version."""
 

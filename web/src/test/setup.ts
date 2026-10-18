@@ -104,6 +104,45 @@ window.matchMedia = (media: string): MediaQueryList => {
   } as unknown as MediaQueryList
 }
 
+/**
+ * jsdom's Blob is missing the async readers (text/arrayBuffer/slice) that the
+ * platform provides; the JournalCard markdown-export test reads the Blob's
+ * contents via .text(). This polyfill fills in just that reader — product code
+ * sees a normal Blob.
+ */
+if (typeof Blob !== 'undefined' && typeof Blob.prototype.text !== 'function') {
+  Object.defineProperty(Blob.prototype, 'text', {
+    configurable: true,
+    writable: true,
+    value(this: Blob): Promise<string> {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result ?? ''))
+        reader.onerror = () => reject(reader.error)
+        reader.readAsText(this)
+      })
+    },
+  })
+}
+
+/**
+ * jsdom has no ResizeObserver; the liquid-glass lens (stage 6c) observes its
+ * host box. This no-op stub keeps the real lib mountable in unit tests —
+ * product code never sees a difference, and the reduced-effects fallback
+ * path (no lib at all) is covered separately in GlassOrb.test.tsx.
+ */
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  class NoopResizeObserver {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  }
+  Object.defineProperty(globalThis, 'ResizeObserver', {
+    configurable: true,
+    value: NoopResizeObserver,
+  })
+}
+
 beforeEach(() => {
   queries.clear()
   // Guarded: some jsdom versions don't populate localStorage on the global.

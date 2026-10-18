@@ -8,6 +8,7 @@ import {
   ApiUnavailableError,
   BadRequestError,
   NetworkError,
+  fetchExercises,
   fetchResources,
   sendChat,
 } from './client'
@@ -15,6 +16,7 @@ import type { components } from './schema.d'
 
 type ChatResponse = components['schemas']['ChatResponse']
 type ResourceOut = components['schemas']['ResourceOut']
+type ExerciseOut = components['schemas']['ExerciseOut']
 
 const fetchMock = vi.fn()
 
@@ -47,6 +49,20 @@ const RESOURCE_LIST: ResourceOut[] = [
   { name: 'Find A Helpline (IASP global directory)', url: 'https://findahelpline.com' },
   { name: '988 Suicide & Crisis Lifeline (US)', url: 'https://988lifeline.org' },
   { name: 'If you are in immediate danger, contact your local emergency services', url: null },
+]
+
+const EXERCISE_LIST: ExerciseOut[] = [
+  {
+    id: 'rumination-postponement',
+    title: 'Thought postponement',
+    summary: 'Set aside a short, fixed window for the looping thoughts.',
+    category: 'rumination',
+    tier: 'A',
+    steps: ['Notice the loop.', 'Park it for later.'],
+    sources: ['Stenzel et al. 2025'],
+    contraindications: [],
+    early_worsening_notice: true,
+  },
 ]
 
 describe('sendChat', () => {
@@ -144,6 +160,32 @@ describe('fetchResources', () => {
     fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
 
     const error = await fetchResources().catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(NetworkError)
+  })
+})
+
+describe('fetchExercises', () => {
+  it('GETs /content/exercises and returns the exercises array', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, { exercises: EXERCISE_LIST }))
+
+    const result = await fetchExercises()
+
+    expect(result).toEqual(EXERCISE_LIST)
+    expect(fetchMock).toHaveBeenCalledWith('/content/exercises')
+  })
+
+  it('maps a non-ok response to ApiUnavailableError without the server detail', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(500, { detail: 'library-internals' }))
+
+    const error = await fetchExercises().catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(ApiUnavailableError)
+    expect((error as Error).message).not.toContain('library-internals')
+  })
+
+  it('maps a fetch rejection to NetworkError', async () => {
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
+
+    const error = await fetchExercises().catch((e: unknown) => e)
     expect(error).toBeInstanceOf(NetworkError)
   })
 })

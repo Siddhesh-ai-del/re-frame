@@ -16,6 +16,7 @@ from fastapi.testclient import TestClient
 import reframe
 from reframe.api.app import create_app
 from reframe.content import default_library
+from reframe.content.schema import EvidenceTier, ExerciseCategory
 from reframe.generation import (
     ConstrainedGenerator,
     GenerationError,
@@ -216,6 +217,69 @@ def test_resources_never_calls_the_pipeline_even_when_generation_fails() -> None
     response = client.get("/resources")
     assert response.status_code == 200
     assert len(response.json()["resources"]) == len(DEFAULT_CRISIS_RESOURCES)
+
+
+# ---------------------------------------------------------------------------
+# Content exercises: the library on the wire (never internal routing fields)
+# ---------------------------------------------------------------------------
+
+
+def test_content_exercises_serves_every_library_module_in_order() -> None:
+    client = TestClient(create_app(StubPipeline(GenerationError("must never run"))))
+    response = client.get("/content/exercises")
+    assert response.status_code == 200
+    body = response.json()
+    assert set(body) == {"exercises"}
+    assert [exercise["id"] for exercise in body["exercises"]] == list(default_library().ids)
+
+
+def test_content_exercises_spot_checks_one_module_field_by_field() -> None:
+    client = TestClient(create_app(StubPipeline(GenerationError("must never run"))))
+    response = client.get("/content/exercises")
+    modules = {exercise["id"]: exercise for exercise in response.json()["exercises"]}
+    expected = default_library().by_id("rumination-postponement")
+    assert modules["rumination-postponement"] == {
+        "id": expected.id,
+        "title": expected.title,
+        "summary": expected.summary,
+        "category": expected.category.value,
+        "tier": expected.tier.value,
+        "steps": list(expected.steps),
+        "sources": list(expected.sources),
+        "contraindications": list(expected.contraindications),
+        "early_worsening_notice": expected.early_worsening_notice,
+    }
+
+
+def test_content_exercises_enums_come_back_as_string_values() -> None:
+    client = TestClient(create_app(StubPipeline(GenerationError("must never run"))))
+    response = client.get("/content/exercises")
+    for exercise in response.json()["exercises"]:
+        assert exercise["category"] in {category.value for category in ExerciseCategory}
+        assert exercise["tier"] in {tier.value for tier in EvidenceTier}
+        assert isinstance(exercise["steps"], list)
+        assert isinstance(exercise["sources"], list)
+        assert isinstance(exercise["contraindications"], list)
+
+
+def test_content_exercises_never_exposes_safety_class_or_other_internals() -> None:
+    client = TestClient(create_app(StubPipeline(GenerationError("sk-SECRET"))))
+    response = client.get("/content/exercises")
+    assert "safety_class" not in response.text
+    assert "sk-SECRET" not in response.text
+    allowed_keys = {
+        "id",
+        "title",
+        "summary",
+        "category",
+        "tier",
+        "steps",
+        "sources",
+        "contraindications",
+        "early_worsening_notice",
+    }
+    for exercise in response.json()["exercises"]:
+        assert set(exercise) == allowed_keys
 
 
 # ---------------------------------------------------------------------------

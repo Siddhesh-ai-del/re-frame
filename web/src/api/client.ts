@@ -14,6 +14,7 @@ import type { components } from './schema.d'
 
 export type ChatResponse = components['schemas']['ChatResponse']
 export type ResourceOut = components['schemas']['ResourceOut']
+export type ExerciseOut = components['schemas']['ExerciseOut']
 
 /** 422: the message was malformed or refused before the pipeline ran. */
 export class BadRequestError extends Error {
@@ -82,4 +83,23 @@ export async function fetchResources(): Promise<ResourceOut[]> {
   }
   const body = (await response.json()) as { resources: ResourceOut[] }
   return body.resources
+}
+
+/**
+ * Fetch the full exercise library (GET /content/exercises). Served from the
+ * packaged content, independent of the LLM. Error mapping matches
+ * fetchResources: non-ok → ApiUnavailableError, rejected fetch → NetworkError.
+ */
+export async function fetchExercises(): Promise<ExerciseOut[]> {
+  let response: Response
+  try {
+    response = await fetch('/content/exercises')
+  } catch {
+    throw new NetworkError()
+  }
+  if (!response.ok) {
+    throw new ApiUnavailableError()
+  }
+  const body = (await response.json()) as { exercises: ExerciseOut[] }
+  return body.exercises
 }

@@ -17,9 +17,17 @@ import {
   fetchResources,
   sendChat,
 } from '../api/client'
+import { EffectsProvider } from '../effects/EffectsContext'
 import { ToastProvider } from '../components/toast/ToastProvider'
 import { ChatPage } from './ChatPage'
 import type { components } from '../api/schema.d'
+
+// The empty-state GlassOrb mounts the glass lib when motion is allowed;
+// jsdom cannot run it, so stand in for the lens here (GlassOrb's own tests
+// cover the fallback decision).
+vi.mock('@samasante/liquid-glass', () => ({
+  Glass: () => <div data-testid="mock-glass" />,
+}))
 
 type ChatResponse = components['schemas']['ChatResponse']
 type ResourceOut = components['schemas']['ResourceOut']
@@ -91,9 +99,11 @@ const FILTERED_REPLY: ChatResponse = {
 function renderChatPage() {
   return render(
     <MemoryRouter>
-      <ToastProvider>
-        <ChatPage />
-      </ToastProvider>
+      <EffectsProvider>
+        <ToastProvider>
+          <ChatPage />
+        </ToastProvider>
+      </EffectsProvider>
     </MemoryRouter>,
   )
 }
@@ -113,10 +123,21 @@ beforeEach(() => {
 })
 
 describe('ChatPage — empty state', () => {
-  it('shows an honest prompt before the first message', () => {
+  it('shows an honest prompt and the glass orb before the first message', () => {
     renderChatPage()
     expect(screen.getByText("What's on your mind?")).toBeInTheDocument()
+    expect(screen.getByTestId('glass-orb')).toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('drops the empty-state orb once the conversation starts', async () => {
+    const user = userEvent.setup()
+    mockSendChat.mockResolvedValue(GENERATED_REPLY)
+    renderChatPage()
+
+    await send(user, 'hello')
+
+    expect(screen.queryByTestId('glass-orb')).not.toBeInTheDocument()
   })
 })
 

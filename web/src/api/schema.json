@@ -43,6 +43,25 @@
         }
       }
     },
+    "/content/exercises": {
+      "get": {
+        "summary": "Content Exercises",
+        "description": "Serve the full exercise library (stage 6c).\n\nThe path is ``/content/exercises`` (not ``/exercises``) precisely\nbecause the SPA owns GET ``/exercises`` — a same-path API route could\nnot be disambiguated by method the way ``POST /chat`` is. Served from\nthe packaged, cached library; no LLM involved, so it stays reachable\non the 503 path.",
+        "operationId": "content_exercises_content_exercises_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseListOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/chat": {
       "post": {
         "summary": "Chat",
@@ -385,6 +404,86 @@
         ],
         "title": "CheckInRequest",
         "description": "Inbound check-in body: known-shape fields only, strict ISO date."
+      },
+      "ExerciseListOut": {
+        "properties": {
+          "exercises": {
+            "items": {
+              "$ref": "#/components/schemas/ExerciseOut"
+            },
+            "type": "array",
+            "title": "Exercises"
+          }
+        },
+        "type": "object",
+        "required": [
+          "exercises"
+        ],
+        "title": "ExerciseListOut",
+        "description": "The full exercise library, in declaration order."
+      },
+      "ExerciseOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "tier": {
+            "type": "string",
+            "title": "Tier"
+          },
+          "steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Steps"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "contraindications": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Contraindications"
+          },
+          "early_worsening_notice": {
+            "type": "boolean",
+            "title": "Early Worsening Notice"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "summary",
+          "category",
+          "tier",
+          "steps",
+          "sources",
+          "contraindications",
+          "early_worsening_notice"
+        ],
+        "title": "ExerciseOut",
+        "description": "One exercise module on the wire.\n\nMirrors the library module exactly EXCEPT ``safety_class`` — that is an\ninternal routing decision (self-help vs referral-only) and is never\nexposed to clients."
       },
       "HTTPValidationError": {
         "properties": {

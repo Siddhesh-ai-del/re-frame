@@ -22,6 +22,7 @@ import { Composer } from '../components/chat/Composer'
 import { CrisisBanner } from '../components/chat/CrisisBanner'
 import { MessageBubble, type MessageRole } from '../components/chat/MessageBubble'
 import { ResourcesPanel } from '../components/chat/ResourcesPanel'
+import { GlassOrb } from '../components/onboarding/GlassOrb'
 import { useToast } from '../components/toast/ToastProvider'
 
 interface ChatMessage {
@@ -127,7 +128,11 @@ export function ChatPage() {
       <h1 className="text-2xl font-medium text-ink">Chat</h1>
       {escalated && <CrisisBanner />}
       {messages.length === 0 ? (
-        <p className="py-8 text-center text-ink-muted">{EMPTY_STATE_PROMPT}</p>
+        // Empty state (6c): the signature orb sits above the honest prompt.
+        <div className="flex flex-col items-center gap-4 py-8">
+          <GlassOrb size={120} />
+          <p className="text-center text-ink-muted">{EMPTY_STATE_PROMPT}</p>
+        </div>
       ) : (
         <ul
           aria-live="polite"

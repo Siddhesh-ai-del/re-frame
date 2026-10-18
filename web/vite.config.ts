@@ -24,7 +24,16 @@ const chatProxy: ProxyOptions = {
 }
 
 /** API prefixes proxied unconditionally (prefix match covers /checkins/{id}). */
-const API_PREFIXES = ['/health', '/instruments', '/checkins', '/resources'] as const
+const API_PREFIXES = [
+  '/health',
+  '/instruments',
+  '/checkins',
+  '/resources',
+  // The exercise-library endpoint (stage 6c). Deliberately NOT /exercises:
+  // that path is the SPA route, and both are GET, so they cannot be
+  // disambiguated by method the way /chat is.
+  '/content',
+] as const
 
 const proxy: Record<string, ProxyOptions> = {
   '/chat': chatProxy,

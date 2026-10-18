@@ -1,8 +1,9 @@
 """Durable check-in storage: single-connection, lock-guarded, fail-closed SQLite.
 
 :class:`SqliteCheckInStore` is the v1 persistence engine for the single-user
-local product: ONE SQLite connection per store for the process lifetime (the
-app's ``create_service`` never closes it in v1), with every access guarded by
+local product: ONE SQLite connection per store, closed when the app shuts
+down (``create_service`` registers the shutdown handler when it creates the
+store), with every access guarded by
 an internal ``threading.Lock`` because FastAPI sync routes run in a
 threadpool. Loading is fail-closed — a malformed stored row makes
 :meth:`load` RAISE naming the row id (a loud startup failure); rows are never

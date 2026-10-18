@@ -43,7 +43,7 @@ The full research base, caveats (including what remains uncertain), and the safe
 
 ## Project status
 
-**Pre-release.** RE:FRAME is in the planning stage: the research base is complete and verified, implementation has not started. There are no releases, no installation instructions, and no production service.
+**Pre-release.** The backend is implemented and tested: stages 0–5 (safety layer, conversation core, intervention delivery, measurement, and the FastAPI service) are complete with green CI, 631 tests, and 100% coverage. The web interface, evaluation harness, and Android client are still to come; there are no releases yet.
 
 ### Roadmap
 
@@ -54,16 +54,23 @@ The full research base, caveats (including what remains uncertain), and the safe
 | Stage 2 | Conversation core: content library + retrieval, constrained generation, output filter, pipeline orchestration | **Complete** |
 | Stage 3 | Intervention delivery: evidence-tiered exercise library served through the pipeline (rumination, behavioral activation, self-compassion, emotion regulation) | **Complete** |
 | Stage 4 | Measurement: validated self-report instruments (K-10, PHQ-9, GAD-7, SCS-SF), scoring, and longitudinal tracking | **Complete** |
-| Stage 5 | API service (FastAPI) exposing the conversation pipeline and measurement endpoints | Planned |
+| Stage 5 | API service (FastAPI) exposing the conversation pipeline and measurement endpoints | **Complete** |
 | Stage 6 | Web application: chat interface, onboarding, tracking views, PWA — built and tested end-to-end before any native client | Planned |
 | Stage 7 | Evaluation harness: adverse-event logging, feasibility-pilot instrumentation and reporting | Planned |
 | Stage 8 | Android client, reusing the proven API (after the web app is tested end-to-end) | Planned |
 
-Each stage follows test-driven development (tests first, 80%+ coverage gate) and is pushed only after its stage tests pass.
+Each stage follows test-driven development (tests first, 100% statement and branch coverage gate) and is pushed only after its stage tests pass with green CI.
 
 ## Installation
 
-**Not yet available.** Installation instructions will appear here once a first release exists.
+**Not yet available as a release.** To run the backend locally from a checkout (development):
+
+```bash
+uv sync                      # or: pip install -e .
+python -m reframe.cli        # serves http://127.0.0.1:8000
+```
+
+Development runs without an LLM API key: scripted crisis and boundary routes and all measurement endpoints work as-is; generated replies return a clean 503 until `REFRAME_API_KEY` is set. Check-ins persist to `reframe.db` (override with `--db`). Full installation instructions will appear here once a first release exists.
 
 ## Architecture
 
@@ -75,7 +82,7 @@ RE:FRAME is intended to be built as a layered pipeline in which safety layers br
 4. **Output safety layer** — independent filter that catches escalation-worthy content, boundary violations, and sycophancy before a reply is delivered.
 5. **Escalation path** — deterministic, non-negotiable: scripted crisis resources and referral prompts; no risk-score stratification (in line with NICE NG225 guidance against risk scales for prediction or categorization).
 
-**Status:** the safety, retrieval, generation, and filtering layers exist today as tested backend components (see Repository layout); the API service and web interface that expose them are still planned.
+**Status:** the safety, retrieval, generation, filtering, and measurement layers exist today as tested backend components, exposed through a tested FastAPI service (see Repository layout); the web interface is the next stage.
 
 ## Repository layout
 
@@ -94,6 +101,7 @@ re-frame/
 │   └── reframe/
 │       ├── __init__.py
 │       ├── config.py
+│       ├── cli.py
 │       ├── safety/
 │       │   ├── __init__.py
 │       │   ├── types.py
@@ -115,11 +123,26 @@ re-frame/
 │       │   ├── prompts.py
 │       │   ├── openai_client.py
 │       │   └── generator.py
-│       └── pipeline/
+│       ├── pipeline/
+│       │   ├── __init__.py
+│       │   ├── output_filter.py
+│       │   ├── messages.py
+│       │   └── pipeline.py
+│       ├── measurement/
+│       │   ├── __init__.py
+│       │   ├── instruments.py
+│       │   ├── scoring.py
+│       │   ├── flags.py
+│       │   ├── tracker.py
+│       │   ├── routing.py
+│       │   ├── store.py
+│       │   └── persistent.py
+│       └── api/
 │           ├── __init__.py
-│           ├── output_filter.py
-│           ├── messages.py
-│           └── pipeline.py
+│           ├── schemas.py
+│           ├── app.py
+│           ├── measure.py
+│           └── service.py
 ├── tests/
 │   ├── test_package.py
 │   ├── test_config.py
@@ -127,6 +150,9 @@ re-frame/
 │   ├── test_content_*.py
 │   ├── test_generation_*.py
 │   ├── test_pipeline_*.py
+│   ├── test_measurement_*.py
+│   ├── test_api_*.py
+│   ├── test_cli.py
 │   └── data/
 │       └── audit_corpus.json
 ├── docs/

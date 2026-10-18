@@ -1,7 +1,7 @@
 # Project Context & Standing Direction
 
 **Read this first in every session working on RE:FRAME.** It records user-confirmed
-direction, non-negotiable rules, and current project state. Last updated: 2026-10-17.
+direction, non-negotiable rules, and current project state. Last updated: 2026-10-18.
 
 ## What this is
 
@@ -67,16 +67,33 @@ before or alongside professional care. Grounded in a verified 147-source researc
   longitudinal CheckInTracker with PHQ-9 item-9 escalation, early-worsening AE signals
   (provisional thresholds, NICE NG222 1.2.10), persistent >=16 referral prompts (1.4.3);
   routing bridges check-in flags onto the pipeline's escalation vocabulary.
-- **Test suite:** 542 tests, 100% statement and branch coverage; CI green (ruff, mypy
+- **Stage 5 — Complete (sub-staged 5a/5b/5c/5d):** FastAPI service — `reframe.api.app`
+  (create_app: /health, /chat; fail-closed error mapping: GenerationError->503,
+  ValueError->422, Exception->500, all generic — secret-token probes prove no leakage;
+  crisis bypass verified through HTTP with the generator never called),
+  `reframe.api.measure` (GET /instruments form-ready specs; POST /checkins returns
+  score + flags + routing — item 9 -> hard_bypass + scripted crisis text, persistent
+  >=16 / early-worsening -> human_review + concern copy; GET /checkins/{id} history),
+  `reframe.measurement.store`/`persistent` (CheckInStore protocol + sqlite3 engine,
+  fail-closed row loading, flags restored verbatim, lock-guarded
+  PersistentCheckInTracker with rollback-on-persist-failure),
+  `reframe.api.service`/`reframe.cli` (create_service composition root — one app with
+  both route families + store closed on shutdown; runnable `python -m reframe.cli`,
+  no-key dev mode serves scripted routes with generated turns 503-ing cleanly).
+  README updated: status paragraph, roadmap (0–5 Complete), coverage gate text (100%),
+  architecture status line, layout tree (measurement/api/cli added), local-run section.
+- **Test suite:** 631 tests, 100% statement and branch coverage; CI green (ruff, mypy
   strict, Python 3.12 + 3.14 matrix, gitleaks).
-- **Next: Stage 5 — FastAPI service** exposing the conversation pipeline
-  (`ConversationPipeline.handle`) and measurement endpoints (`record check-in` →
-  `route_for_checkin`; tracker persistence decision needed — DB choice is a Stage 5
-  sub-stage decision). Then Stage 6 web app (chat UI, onboarding, PWA — tested
-  end-to-end before any Android work), Stage 7 evaluation harness, Stage 8 Android.
-  Open item for Stage 5: verify SCS-SF item wording against Neff 2011 and activate it
-  (moves from PENDING_VERIFICATION to INSTRUMENTS). See README roadmap for the
-  authoritative stage table.
+- **Next: Stage 6 — web application** (TypeScript/React chat UI, onboarding, tracking
+  views, PWA) — built and tested end-to-end (E2E via Playwright) against the Stage 5
+  API before any Android work. Decisions needed: frontend framework exact choice
+  (React per D2 plan), build tool (Vite typical), how the SPA is served (FastAPI
+  static mount vs separate dev server — note create_app currently takes no static
+  mounting; a small addition will be needed), E2E test harness in CI (Playwright
+  job). Then Stage 7 evaluation harness, Stage 8 Android.
+  Open item (was Stage 5, still open): verify SCS-SF item wording against Neff 2011
+  and activate it (move from PENDING_VERIFICATION to INSTRUMENTS). See README roadmap
+  for the authoritative stage table.
 - **Housekeeping (decided 2026-10-15):** research files (`distress-management-pipeline.md`,
   `.provenance.md`) are intentionally untracked in the repo root; `.drafts/` and `.plans/`
   are git-ignored working artifacts. The old docs-only clone at `/home/siddhesh/re-frame/`

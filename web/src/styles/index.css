@@ -1,0 +1,20 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+/* Alias the design tokens as Tailwind utilities (bg-accent, text-ink, …). */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-sunk: var(--surface-sunk);
+  --color-border: var(--border);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-crisis: var(--crisis);
+  --color-crisis-soft: var(--crisis-soft);
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+}

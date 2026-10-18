@@ -21,6 +21,29 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: mypy
+      - run: python scripts/dump_openapi.py
+      - run: git diff --exit-code -- web/src/api/schema.json
+
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      # npm ci runs `prepare`, which generates src/api/schema.d.ts from the
+      # committed schema.json.
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test:coverage
+      - run: npm run build
 
   test:
     name: Tests (Python ${{ matrix.python-version }})

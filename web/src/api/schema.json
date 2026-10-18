@@ -1,0 +1,603 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "RE:FRAME API",
+    "description": "RE:FRAME is a wellness companion API for emotional distress self-management, offering grounded, evidence-informed exercise support behind a layered safety system.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat": {
+      "post": {
+        "summary": "Chat",
+        "operationId": "chat_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/instruments": {
+      "get": {
+        "summary": "List Instruments",
+        "operationId": "list_instruments_instruments_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstrumentListOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/checkins": {
+      "post": {
+        "summary": "Record Checkin",
+        "operationId": "record_checkin_checkins_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckInRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/checkins/{instrument_id}": {
+      "get": {
+        "summary": "Checkin History",
+        "operationId": "checkin_history_checkins__instrument_id__get",
+        "parameters": [
+          {
+            "name": "instrument_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Instrument Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInListOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnswerOptionOut": {
+        "properties": {
+          "value": {
+            "type": "integer",
+            "title": "Value"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "label"
+        ],
+        "title": "AnswerOptionOut",
+        "description": "One labelled answer option on the instrument's scale."
+      },
+      "ChatRequest": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Message"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ChatRequest",
+        "description": "Inbound chat body: a single length-bounded user message, nothing else."
+      },
+      "ChatResponse": {
+        "properties": {
+          "reply": {
+            "type": "string",
+            "title": "Reply"
+          },
+          "route": {
+            "type": "string",
+            "title": "Route"
+          },
+          "module_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Module Ids"
+          },
+          "violations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Violations"
+          },
+          "resources": {
+            "items": {
+              "$ref": "#/components/schemas/ResourceOut"
+            },
+            "type": "array",
+            "title": "Resources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reply",
+          "route",
+          "module_ids",
+          "violations",
+          "resources"
+        ],
+        "title": "ChatResponse",
+        "description": "Outbound chat result: the reply, its route, grounding, and resources."
+      },
+      "CheckInListOut": {
+        "properties": {
+          "checkins": {
+            "items": {
+              "$ref": "#/components/schemas/CheckInOut"
+            },
+            "type": "array",
+            "title": "Checkins"
+          }
+        },
+        "type": "object",
+        "required": [
+          "checkins"
+        ],
+        "title": "CheckInListOut",
+        "description": "Chronological check-in history for one instrument."
+      },
+      "CheckInOut": {
+        "properties": {
+          "instrument_id": {
+            "type": "string",
+            "title": "Instrument Id"
+          },
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "responses": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Responses"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "severity_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity Label"
+          },
+          "flags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Flags"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "message_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Id"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "instrument_id",
+          "date",
+          "responses",
+          "total",
+          "severity_label",
+          "flags",
+          "action",
+          "message_id",
+          "message"
+        ],
+        "title": "CheckInOut",
+        "description": "One recorded check-in: raw data, score, flags, and its routing decision.\n\n``action``/``message_id``/``message`` come from the pre-specified routing\ntable applied to this check-in's flags — the client escalates on these,\nnever on ``total`` alone. ``message`` is ``None`` exactly when the route\nis ``proceed``."
+      },
+      "CheckInRequest": {
+        "properties": {
+          "instrument_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Instrument Id"
+          },
+          "responses": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Responses"
+          },
+          "date": {
+            "type": "string",
+            "title": "Date"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "instrument_id",
+          "responses",
+          "date"
+        ],
+        "title": "CheckInRequest",
+        "description": "Inbound check-in body: known-shape fields only, strict ISO date."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "version"
+        ],
+        "title": "HealthResponse",
+        "description": "Liveness payload: service status and package version."
+      },
+      "InstrumentItemOut": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "title": "Index"
+          },
+          "prompt": {
+            "type": "string",
+            "title": "Prompt"
+          }
+        },
+        "type": "object",
+        "required": [
+          "index",
+          "prompt"
+        ],
+        "title": "InstrumentItemOut",
+        "description": "One instrument item as a UI needs it: 1-based index and prompt."
+      },
+      "InstrumentListOut": {
+        "properties": {
+          "instruments": {
+            "items": {
+              "$ref": "#/components/schemas/InstrumentOut"
+            },
+            "type": "array",
+            "title": "Instruments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "instruments"
+        ],
+        "title": "InstrumentListOut",
+        "description": "Every active instrument, in registry order."
+      },
+      "InstrumentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "recall_period": {
+            "type": "string",
+            "title": "Recall Period"
+          },
+          "scale_min": {
+            "type": "integer",
+            "title": "Scale Min"
+          },
+          "scale_max": {
+            "type": "integer",
+            "title": "Scale Max"
+          },
+          "total_min": {
+            "type": "integer",
+            "title": "Total Min"
+          },
+          "total_max": {
+            "type": "integer",
+            "title": "Total Max"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/InstrumentItemOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "answer_options": {
+            "items": {
+              "$ref": "#/components/schemas/AnswerOptionOut"
+            },
+            "type": "array",
+            "title": "Answer Options"
+          },
+          "severity_bands": {
+            "items": {
+              "$ref": "#/components/schemas/SeverityBandOut"
+            },
+            "type": "array",
+            "title": "Severity Bands"
+          },
+          "citation": {
+            "type": "string",
+            "title": "Citation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "recall_period",
+          "scale_min",
+          "scale_max",
+          "total_min",
+          "total_max",
+          "items",
+          "answer_options",
+          "severity_bands",
+          "citation"
+        ],
+        "title": "InstrumentOut",
+        "description": "Full instrument specification on the wire, enough to render a form."
+      },
+      "ResourceOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "url"
+        ],
+        "title": "ResourceOut",
+        "description": "A named crisis resource; ``url`` is ``None`` for non-linkable guidance."
+      },
+      "SeverityBandOut": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "lower": {
+            "type": "integer",
+            "title": "Lower"
+          },
+          "upper": {
+            "type": "integer",
+            "title": "Upper"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "lower",
+          "upper"
+        ],
+        "title": "SeverityBandOut",
+        "description": "One inclusive total range mapped to a severity-band label."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

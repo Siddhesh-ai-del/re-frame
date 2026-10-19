@@ -72,6 +72,18 @@ describe('InstrumentPicker', () => {
     ).toHaveAttribute('aria-pressed', 'false')
   })
 
+  it('renders the selected chip with AA-safe accent text on the soft tint', () => {
+    // Stage 6e a11y: accent text on `--accent-soft` is 4.19:1 (axe-flagged
+    // on /check-ins); the selected state uses `text-accent-ink` instead.
+    renderPicker()
+    const selected = screen.getByRole('button', {
+      name: /Patient Health Questionnaire-9/,
+    })
+    expect(selected.className).toContain('bg-accent-soft')
+    expect(selected.className).toContain('text-accent-ink')
+    expect(selected.className).not.toMatch(/(^|\s)text-accent(\s|$)/)
+  })
+
   it('reports a selection with the instrument id', async () => {
     const user = userEvent.setup()
     const { onSelect } = renderPicker()

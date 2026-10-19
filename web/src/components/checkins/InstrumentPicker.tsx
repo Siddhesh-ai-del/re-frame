@@ -69,7 +69,7 @@ export function InstrumentPicker({
             className={[
               'flex flex-col items-start gap-0.5 rounded-[var(--radius-card)] border px-3 py-2 text-left transition-colors duration-150',
               selected
-                ? 'border-accent bg-accent-soft text-accent'
+                ? 'border-accent bg-accent-soft text-accent-ink'
                 : 'border-border bg-surface text-ink hover:bg-surface-sunk',
             ].join(' ')}
           >

@@ -11,6 +11,7 @@
   --color-ink-muted: var(--ink-muted);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
   --color-crisis: var(--crisis);

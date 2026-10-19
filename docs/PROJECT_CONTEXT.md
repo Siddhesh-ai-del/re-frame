@@ -1,7 +1,7 @@
 # Project Context & Standing Direction
 
 **Read this first in every session working on RE:FRAME.** It records user-confirmed
-direction, non-negotiable rules, and current project state. Last updated: 2026-10-18.
+direction, non-negotiable rules, and current project state. Last updated: 2026-10-19.
 
 ## What this is
 
@@ -56,6 +56,32 @@ before or alongside professional care. Grounded in a verified 147-source researc
    citations with **no traffic-light/risk coloring** (NG225); journal text stays on
    device; honest error states (503 = assistant unavailable, resources still reachable).
 
+## Standing decisions (Stage 6e completion, 2026-10-19 — per the approved stage spec)
+
+10. **Config LLM overrides.** `REFRAME_LLM_BASE_URL` / `REFRAME_LLM_MODEL` optionally
+    replace the CLI's OpenAI defaults; base URL is fail-closed (non-`http(s)` → the
+    service refuses to start). Blank = unset. Generation still always requires
+    `REFRAME_API_KEY` — overrides alone never enable a model.
+11. **Static serving from FastAPI.** `python -m reframe.cli --static <dir>` mounts the
+    built SPA LAST in `create_service`, so every API route wins by registration order —
+    the prod `/chat` method collision resolves exactly like the dev proxy (GET → SPA,
+    POST → API). No `static_dir`/missing dir = API-only app, byte-identical route table.
+12. **PWA + offline.** Install manifest (sage `#4A7C59`, honest description); service
+    worker precaches the app shell (mandatory) and `GET /resources` + `offline.html`
+    (best-effort), serves navigations network-first with a cache/offline fallback, and
+    cache-fills same-origin assets; `offline.html` carries the crisis resources HARDCODED
+    so they render with no network at all. Registration runs only in production builds
+    and never throws.
+13. **Axe-clean is a bar, not a report.** Every route must show ZERO axe-core
+    violations (WCAG 2.2 AA) in E2E; violations are fixed in the component, never
+    allowlisted. (6e fix: derived `--accent-ink` token — accent text on the doc-pinned
+    `--accent-soft` tint is 4.19:1, so selected states use the darker 5.37:1 sage.)
+14. **Mock-LLM E2E pattern.** Generated-turn proofs run against a REAL composed service
+    (built SPA + API in one FastAPI process) wired by config overrides to a stdlib mock
+    OpenAI provider — no real credentials anywhere, and the 21 safety specs stay keyless
+    on the separate dev lane (ports 8123/5373; composed lane 8124/8125; port 8000 is
+    never touched).
+
 ## How we work (established conventions)
 
 - **Stack:** Python ≥ 3.11 (FastAPI planned for the API), TypeScript/React planned for
@@ -104,16 +130,31 @@ before or alongside professional care. Grounded in a verified 147-source researc
   no-key dev mode serves scripted routes with generated turns 503-ing cleanly).
   README updated: status paragraph, roadmap (0–5 Complete), coverage gate text (100%),
   architecture status line, layout tree (measurement/api/cli added), local-run section.
-- **Test suite:** 631 tests, 100% statement and branch coverage; CI green (ruff, mypy
-  strict, Python 3.12 + 3.14 matrix, gitleaks).
-- **Next: Stage 6 — web application** — **build strictly per `docs/webapp-design.md`**
-  (approved 2026-10-18: calm-minimal sage palette, four component sources, nine showcase
-  picks, Canvas UI vendored-with-notice, sub-stages 6a–6e: scaffold/shell → chat →
-  onboarding+exercises → check-ins+effects → PWA+serving+E2E wrap). Stack per that doc:
-  React+TS strict+Vite+Tailwind, Vitest/RTL (80% web gate), Playwright+axe E2E, OpenAPI
-  type drift test, FastAPI static mount, mock-LLM E2E via config base-url override.
-  Then Stage 7 evaluation harness, Stage 8 Android.
-  Open item carried: verify SCS-SF item wording against Neff 2011, then activate
+- **Stage 6 — Complete (sub-staged 6a–6e), built strictly per `docs/webapp-design.md`:**
+  web application in `web/` (Vite + React 19 + strict TS + Tailwind 4, sage tokens) with
+  five routes — onboarding, chat, exercise library, check-in dashboard, settings — plus
+  typed API client, honest error/503 states, crisis banner + resources, device-local
+  journal, reduced-effects engine, vendored Canvas UI (with NOTICE), and a frontend
+  wellness-lane claims lint. Final sub-stage 6e added: config LLM overrides
+  (`REFRAME_LLM_BASE_URL`/`REFRAME_LLM_MODEL`, fail-closed), `--static <dir>` FastAPI
+  serving of the built SPA (route precedence: API routes registered before the mount win;
+  `GET /chat` → SPA, `POST /chat` → API), PWA (manifest + service worker precaching the
+  shell and `/resources` + network-free `offline.html` with hardcoded crisis resources,
+  registration production-only), axe-core zero-violation pass over all five routes
+  (component fix: derived `--accent-ink` token for accent text on the pinned
+  `--accent-soft` tint), and a mock-LLM generated-turn E2E against a real composed
+  service (`web/dist` + `--static` + stdlib mock provider) proving a generated reply
+  reaches the UI without any real credential. README roadmap flipped to Complete with
+  evidence; CHANGELOG updated.
+- **Test suite:** backend 689 tests at 100% statement and branch coverage; web 343
+  frontend tests at 98.99% statements / 94.74% branches; 31 Playwright E2E specs (21
+  keyless safety specs unchanged + 5 axe + 3 generated-turn + 2 PWA offline); CI green
+  (ruff, mypy strict, Python 3.12 + 3.14 matrix, gitleaks).
+- **Next: Stage 7 — evaluation harness** (adverse-event logging, feasibility-pilot
+  instrumentation and reporting, per the README roadmap table). Stage 8 — Android client
+  follows after, reusing the proven API (D2/D3: web-first, then native; `--static`
+  serving also means the same API process can serve a webview-backed client directly).
+  Open items carried: verify SCS-SF item wording against Neff 2011, then activate
   in INSTRUMENTS. See README roadmap for the authoritative stage table.
 - **Housekeeping (decided 2026-10-15):** research files (`distress-management-pipeline.md`,
   `.provenance.md`) are intentionally untracked in the repo root; `.drafts/` and `.plans/`

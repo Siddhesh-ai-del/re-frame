@@ -35,6 +35,8 @@ def _clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Remove every REFRAME_* variable so the config behavior is deterministic."""
     monkeypatch.delenv("REFRAME_ENV", raising=False)
     monkeypatch.delenv("REFRAME_API_KEY", raising=False)
+    monkeypatch.delenv("REFRAME_LLM_BASE_URL", raising=False)
+    monkeypatch.delenv("REFRAME_LLM_MODEL", raising=False)
 
 
 def _record_service(monkeypatch: pytest.MonkeyPatch) -> tuple[list[dict[str, object]], object]:
@@ -252,3 +254,142 @@ def test_importing_the_cli_module_does_not_import_uvicorn() -> None:
     # have come with it (uvicorn is imported lazily inside _run_uvicorn).
     assert "reframe.cli" in sys.modules
     assert "uvicorn" not in sys.modules
+
+
+# ---------------------------------------------------------------------------
+# Stage 6e: --static flag, LLM endpoint overrides, fail-closed base URL
+# ---------------------------------------------------------------------------
+
+
+def _record_client(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, object]]:
+    """Replace ``cli.OpenAICompatibleClient`` with a recorder (no I/O object)."""
+    captured: list[dict[str, object]] = []
+
+    def _fake_client(**kwargs: object) -> object:
+        captured.append(kwargs)
+        return object()
+
+    monkeypatch.setattr(cli, "OpenAICompatibleClient", _fake_client)
+    return captured
+
+
+def test_static_dir_is_forwarded_to_create_service(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    _clean_env(monkeypatch)
+    monkeypatch.setenv("REFRAME_API_KEY", TEST_API_KEY)
+    service_calls, _sentinel_app = _record_service(monkeypatch)
+    _record_serve(monkeypatch)
+    static_dir = tmp_path / "dist"
+    static_dir.mkdir()
+
+    exit_code = cli.main(["--static", str(static_dir)])
+
+    assert exit_code == 0
+    assert service_calls[0]["static_dir"] == Path(str(static_dir))
+
+
+def test_no_static_flag_forwards_none(monkeypatch: pytest.MonkeyPatch) -> None:
+    _clean_env(monkeypatch)
+    monkeypatch.setenv("REFRAME_API_KEY", TEST_API_KEY)
+    service_calls, _sentinel_app = _record_service(monkeypatch)
+    _record_serve(monkeypatch)
+
+    exit_code = cli.main([])
+
+    assert exit_code == 0
+    assert "static_dir" in service_calls[0]
+    assert service_calls[0]["static_dir"] is None
+
+
+def test_llm_overrides_win_over_module_constants(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _clean_env(monkeypatch)
+    monkeypatch.setenv("REFRAME_API_KEY", TEST_API_KEY)
+    monkeypatch.setenv("REFRAME_LLM_BASE_URL", "http://127.0.0.1:8125")
+    monkeypatch.setenv("REFRAME_LLM_MODEL", "mock-model")
+    captured = _record_client(monkeypatch)
+    service_calls, _sentinel_app = _record_service(monkeypatch)
+    _record_serve(monkeypatch)
+
+    exit_code = cli.main([])
+
+    assert exit_code == 0
+    assert len(captured) == 1
+    assert captured[0]["base_url"] == "http://127.0.0.1:8125"
+    assert captured[0]["model"] == "mock-model"
+    assert captured[0]["api_key"] == TEST_API_KEY
+    assert type(service_calls[0]["generator"]) is ConstrainedGenerator
+
+
+def test_module_constants_used_when_overrides_absent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _clean_env(monkeypatch)
+    monkeypatch.setenv("REFRAME_API_KEY", TEST_API_KEY)
+    captured = _record_client(monkeypatch)
+    _record_service(monkeypatch)
+    _record_serve(monkeypatch)
+
+    exit_code = cli.main([])
+
+    assert exit_code == 0
+    assert len(captured) == 1
+    assert captured[0]["base_url"] == cli.LLM_BASE_URL
+    assert captured[0]["model"] == cli.LLM_MODEL
+
+
+def test_partial_override_mixes_override_and_constant(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _clean_env(monkeypatch)
+    monkeypatch.setenv("REFRAME_API_KEY", TEST_API_KEY)
+    monkeypatch.setenv("REFRAME_LLM_BASE_URL", "http://127.0.0.1:8125")
+    captured = _record_client(monkeypatch)
+    _record_service(monkeypatch)
+    _record_serve(monkeypatch)
+
+    exit_code = cli.main([])
+
+    assert exit_code == 0
+    assert captured[0]["base_url"] == "http://127.0.0.1:8125"
+    assert captured[0]["model"] == cli.LLM_MODEL
+
+
+def test_invalid_llm_base_url_env_exits_2_without_serving(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _clean_env(monkeypatch)
+    monkeypatch.setenv("REFRAME_API_KEY", TEST_API_KEY)
+    monkeypatch.setenv("REFRAME_LLM_BASE_URL", "not-a-url")
+    service_calls, _sentinel_app = _record_service(monkeypatch)
+    serve_calls = _record_serve(monkeypatch)
+
+    exit_code = cli.main([])
+
+    assert exit_code == 2
+    assert "REFRAME_LLM_BASE_URL" in capsys.readouterr().err
+    assert service_calls == []
+    assert serve_calls == []
+
+
+def test_overrides_alone_never_build_a_client_without_a_key(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # A base URL/model without a key must NOT construct a client: the no-key
+    # path stays fail-closed (_UnconfiguredGenerator -> 503 on generated turns).
+    _clean_env(monkeypatch)
+    monkeypatch.setenv("REFRAME_LLM_BASE_URL", "http://127.0.0.1:8125")
+    monkeypatch.setenv("REFRAME_LLM_MODEL", "mock-model")
+    captured = _record_client(monkeypatch)
+    service_calls, _sentinel_app = _record_service(monkeypatch)
+    serve_calls = _record_serve(monkeypatch)
+
+    exit_code = cli.main([])
+
+    assert exit_code == 0
+    assert captured == []
+    assert isinstance(service_calls[0]["generator"], cli._UnconfiguredGenerator)
+    assert "no LLM API key configured" in capsys.readouterr().err
+    assert len(serve_calls) == 1

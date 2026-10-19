@@ -47,7 +47,7 @@ export function AppShell() {
                   className={[
                     'flex items-center gap-2 rounded-pill px-3 py-2 text-sm transition-colors duration-150',
                     active
-                      ? 'bg-accent-soft text-accent'
+                      ? 'bg-accent-soft text-accent-ink'
                       : 'text-ink-muted hover:bg-surface-sunk',
                   ].join(' ')}
                 >

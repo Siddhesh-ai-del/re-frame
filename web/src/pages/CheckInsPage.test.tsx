@@ -222,11 +222,15 @@ describe('CheckInsPage — instruments and status bar', () => {
     renderPage()
 
     expect(await screen.findByRole('form', { name: /check-in/i })).toBeInTheDocument()
-    const picker = screen.getByRole('button', { name: /Patient Health Questionnaire-9/ })
+    const picker = await screen.findByRole('button', {
+      name: /Patient Health Questionnaire-9/,
+    })
     expect(picker).toHaveAttribute('aria-pressed', 'true')
-    expect(
-      await screen.findByRole('region', { name: 'Dashboard status' }),
-    ).toHaveTextContent('No check-ins yet.')
+    // Wait for the CONTENT, not the container: the status region exists from
+    // the first commit showing "Loading your check-in history…", and only
+    // swaps to the empty state once the history promise resolves a commit
+    // later. Asserting on the region's immediate presence raced that swap.
+    expect(await screen.findByText('No check-ins yet.')).toBeInTheDocument()
     expect(within(picker).getByText('the past 2 weeks')).toBeInTheDocument()
   })
 

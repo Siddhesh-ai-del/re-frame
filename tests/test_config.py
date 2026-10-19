@@ -123,3 +123,107 @@ def test_explicit_mapping_ignores_os_environ(monkeypatch: pytest.MonkeyPatch) ->
 
     assert settings.environment == "test"
     assert settings.api_key is None
+
+
+# ---------------------------------------------------------------------------
+# Stage 6e: optional LLM endpoint overrides (mock-LLM / local provider seam)
+# ---------------------------------------------------------------------------
+
+
+def test_llm_overrides_default_to_none() -> None:
+    settings = load_settings({})
+    assert settings.llm_base_url is None
+    assert settings.llm_model is None
+
+
+def test_settings_dataclass_llm_defaults() -> None:
+    settings = Settings()
+    assert settings.llm_base_url is None
+    assert settings.llm_model is None
+
+
+def test_llm_overrides_read_from_env_mapping() -> None:
+    settings = load_settings(
+        {
+            "REFRAME_LLM_BASE_URL": "http://127.0.0.1:8125",
+            "REFRAME_LLM_MODEL": "mock-model",
+        }
+    )
+    assert settings.llm_base_url == "http://127.0.0.1:8125"
+    assert settings.llm_model == "mock-model"
+
+
+def test_llm_overrides_are_stripped() -> None:
+    settings = load_settings(
+        {
+            "REFRAME_LLM_BASE_URL": "  https://llm.example/v1  ",
+            "REFRAME_LLM_MODEL": "  my-model  ",
+        }
+    )
+    assert settings.llm_base_url == "https://llm.example/v1"
+    assert settings.llm_model == "my-model"
+
+
+@pytest.mark.parametrize("raw", ["", "   ", "\t\n"])
+def test_blank_llm_base_url_is_treated_as_unset(raw: str) -> None:
+    settings = load_settings({"REFRAME_LLM_BASE_URL": raw})
+    assert settings.llm_base_url is None
+
+
+@pytest.mark.parametrize("raw", ["", "   ", "\t\n"])
+def test_blank_llm_model_is_treated_as_unset(raw: str) -> None:
+    settings = load_settings({"REFRAME_LLM_MODEL": raw})
+    assert settings.llm_model is None
+
+
+@pytest.mark.parametrize(
+    "raw",
+    ["ftp://llm.example/v1", "llm.example", "file:///tmp/llm", "ws://localhost:9999"],
+)
+def test_invalid_llm_base_url_fails_closed(raw: str) -> None:
+    with pytest.raises(ValueError) as excinfo:
+        load_settings({"REFRAME_LLM_BASE_URL": raw})
+
+    message = str(excinfo.value)
+    assert "REFRAME_LLM_BASE_URL" in message
+    assert "http" in message
+
+
+def test_llm_base_url_accepts_both_http_schemes() -> None:
+    for url in ("http://127.0.0.1:8125", "https://api.openai.com/v1"):
+        settings = load_settings({"REFRAME_LLM_BASE_URL": url})
+        assert settings.llm_base_url == url
+
+
+def test_llm_model_accepts_any_non_blank_value() -> None:
+    # Not validated beyond non-blank: the client validates at construction.
+    settings = load_settings({"REFRAME_LLM_MODEL": "gpt-x-large-2026"})
+    assert settings.llm_model == "gpt-x-large-2026"
+
+
+def test_llm_overrides_read_from_os_environ(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("REFRAME_LLM_BASE_URL", "http://127.0.0.1:8125")
+    monkeypatch.setenv("REFRAME_LLM_MODEL", "mock-model")
+
+    settings = load_settings()
+
+    assert settings.llm_base_url == "http://127.0.0.1:8125"
+    assert settings.llm_model == "mock-model"
+
+
+def test_llm_overrides_are_repr_visible_not_secret() -> None:
+    # Unlike the API key, the endpoint overrides are not secrets: they render.
+    settings = Settings(llm_base_url="http://127.0.0.1:8125", llm_model="mock-model")
+    assert "llm_base_url" in repr(settings)
+    assert "mock-model" in repr(settings)
+
+
+def test_production_rule_is_unchanged_by_llm_overrides() -> None:
+    # Regression: production without a key still fails closed, even with
+    # endpoint overrides configured.
+    with pytest.raises(ValueError) as excinfo:
+        load_settings(
+            {"REFRAME_ENV": "production", "REFRAME_LLM_BASE_URL": "http://127.0.0.1:8125"}
+        )
+
+    assert "REFRAME_API_KEY" in str(excinfo.value)

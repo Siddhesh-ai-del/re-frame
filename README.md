@@ -39,11 +39,11 @@ The full research base, caveats (including what remains uncertain), and the safe
 - Self-tracking with free validated instruments (K-10, PHQ-9, GAD-7, SCS-SF) and longitudinal progress views
 - Safety audit logging and pre-specified adverse-event monitoring
 
-> **None of these are user-facing yet.** Pipeline components are under active, test-driven development (see Roadmap below); there is no complete product, no release, and no service.
+> **Pre-release.** The pipeline and a local web application exist and are tested end-to-end (see the Roadmap below); there is no hosted service, no release, and nothing runs without your own local setup.
 
 ## Project status
 
-**Pre-release.** The backend is implemented and tested: stages 0–5 (safety layer, conversation core, intervention delivery, measurement, and the FastAPI service) are complete with green CI, 631 tests, and 100% coverage. The web interface, evaluation harness, and Android client are still to come; there are no releases yet.
+**Pre-release.** Stages 0–6 are complete with green CI: the backend (safety layer, conversation core, intervention delivery, measurement, and the FastAPI service) at 689 tests and 100% coverage, and the web application (chat, onboarding, exercise library, check-ins, settings) at 343 frontend tests / 98.99% statement coverage plus 31 Playwright end-to-end specs — including an axe-core accessibility pass with zero violations on all five routes, a service-worker offline proof, and a generated-reply proof against a mock LLM provider. The evaluation harness (Stage 7) and the Android client (Stage 8) are still to come; there are no releases yet.
 
 ### Roadmap
 
@@ -55,7 +55,7 @@ The full research base, caveats (including what remains uncertain), and the safe
 | Stage 3 | Intervention delivery: evidence-tiered exercise library served through the pipeline (rumination, behavioral activation, self-compassion, emotion regulation) | **Complete** |
 | Stage 4 | Measurement: validated self-report instruments (K-10, PHQ-9, GAD-7, SCS-SF), scoring, and longitudinal tracking | **Complete** |
 | Stage 5 | API service (FastAPI) exposing the conversation pipeline and measurement endpoints | **Complete** |
-| Stage 6 | Web application: chat interface, onboarding, tracking views, PWA — built and tested end-to-end before any native client | Planned |
+| Stage 6 | Web application: chat interface, onboarding, tracking views, PWA — built and tested end-to-end before any native client | **Complete** (5-route web app, PWA with offline shell, `--static` serving from FastAPI, mock-LLM generated-turn E2E, zero-violation axe pass) |
 | Stage 7 | Evaluation harness: adverse-event logging, feasibility-pilot instrumentation and reporting | Planned |
 | Stage 8 | Android client, reusing the proven API (after the web app is tested end-to-end) | Planned |
 
@@ -63,14 +63,46 @@ Each stage follows test-driven development (tests first, 100% statement and bran
 
 ## Installation
 
-**Not yet available as a release.** To run the backend locally from a checkout (development):
+**Not yet available as a release.** To run the project locally from a checkout (development):
+
+### API only (backend service)
 
 ```bash
 uv sync                      # or: pip install -e .
 python -m reframe.cli        # serves http://127.0.0.1:8000
 ```
 
-Development runs without an LLM API key: scripted crisis and boundary routes and all measurement endpoints work as-is; generated replies return a clean 503 until `REFRAME_API_KEY` is set. Check-ins persist to `reframe.db` (override with `--db`). Full installation instructions will appear here once a first release exists.
+Development runs without an LLM API key: scripted crisis and boundary routes and all measurement endpoints work as-is; generated replies return a clean 503 until `REFRAME_API_KEY` is set. Check-ins persist to `reframe.db` (override with `--db`).
+
+### Web app (dev server)
+
+```bash
+cd web
+npm ci
+npm run dev                  # serves http://127.0.0.1:5373, API proxy targets :8000
+```
+
+The dev server proxies the API paths to the backend (`REFRAME_API_TARGET` overrides the target, which is how E2E points it at its own backend port).
+
+### Built SPA served by FastAPI (closest to production)
+
+```bash
+cd web && npm run build      # produces web/dist
+cd .. && python -m reframe.cli --static web/dist
+```
+
+One process then serves both the built web app and the JSON API: registered API routes win, `GET /chat` and any other unknown GET fall through to the SPA shell. `npm run e2e` in `web/` exercises this composed service end-to-end against a mock LLM provider (no real credentials anywhere).
+
+### Configuration (environment variables)
+
+| Variable | Purpose |
+|----------|---------|
+| `REFRAME_ENV` | `development` (default) / `test` / `production` — production refuses to start without an API key |
+| `REFRAME_API_KEY` | LLM API key; unset = server still runs, generated turns return an honest 503 |
+| `REFRAME_LLM_BASE_URL` | Optional OpenAI-compatible endpoint override (must be `http(s)://`, fail-closed) |
+| `REFRAME_LLM_MODEL` | Optional model-name override (defaults to `gpt-4o-mini`) |
+
+Full installation instructions will appear here once a first release exists.
 
 ## Architecture
 
@@ -82,7 +114,7 @@ RE:FRAME is intended to be built as a layered pipeline in which safety layers br
 4. **Output safety layer** — independent filter that catches escalation-worthy content, boundary violations, and sycophancy before a reply is delivered.
 5. **Escalation path** — deterministic, non-negotiable: scripted crisis resources and referral prompts; no risk-score stratification (in line with NICE NG225 guidance against risk scales for prediction or categorization).
 
-**Status:** the safety, retrieval, generation, filtering, and measurement layers exist today as tested backend components, exposed through a tested FastAPI service (see Repository layout); the web interface is the next stage.
+**Status:** the safety, retrieval, generation, filtering, and measurement layers exist today as tested backend components, exposed through a tested FastAPI service; a tested React web application (installed as a PWA, with an offline fallback page carrying the standing crisis resources) consumes that service, either through a dev-server proxy or served directly by FastAPI from a production build. See Repository layout for both halves.
 
 ## Repository layout
 
@@ -155,6 +187,31 @@ re-frame/
 │   ├── test_cli.py
 │   └── data/
 │       └── audit_corpus.json
+├── scripts/
+│   └── dump_openapi.py          # deterministic OpenAPI dump (CI schema-drift gate)
+├── web/
+│   ├── package.json             # npm scripts invoke ./node_modules/.bin/* (colon-safe repo path)
+│   ├── playwright.config.ts     # dev lane (port 5373 + backend 8123) and composed-service lane (8124 + mock LLM 8125)
+│   ├── index.html               # links the manifest + sage theme-color
+│   ├── public/
+│   │   ├── manifest.webmanifest # PWA install manifest (sage theming)
+│   │   ├── sw.js                # service worker: precaches shell + /resources, offline navigation, cache-first assets
+│   │   ├── offline.html         # network-free fallback page with hardcoded crisis resources
+│   │   └── icon.svg / icon-maskable.svg / favicon.svg
+│   ├── scripts/
+│   │   └── mock-llm-server.py   # stdlib OpenAI-compatible mock provider for the generated-turn E2E
+│   ├── src/
+│   │   ├── App.tsx / main.tsx   # routes + production-only SW registration
+│   │   ├── api/                 # typed client + generated OpenAPI schema types
+│   │   ├── pages/               # Welcome, Chat, Exercises, Check-ins, Settings
+│   │   ├── components/          # AppShell, chat, onboarding, exercises, checkins, settings, toast
+│   │   ├── effects/             # reduced-motion engine, ambient aurora, FrostClouds wrapper
+│   │   ├── pwa/                 # service-worker registration module (no-op outside prod)
+│   │   ├── styles/              # sage design tokens + WCAG contrast tests
+│   │   ├── lib/ lint/ test/     # device-local journal, wellness-lane claims lint, setup
+│   │   └── api/schema.json      # OpenAPI schema (dumped by scripts/dump_openapi.py)
+│   ├── e2e/                     # Playwright specs: 21 keyless safety specs + axe a11y + generated-turn + PWA offline
+│   └── vendored/                # Canvas UI (MIT + Commons Clause) — see its NOTICE, not Apache-2.0
 ├── docs/
 │   └── README.md
 └── .github/

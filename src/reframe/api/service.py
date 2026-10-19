@@ -7,6 +7,14 @@ check-in routes from :func:`reframe.api.measure.include_measurement_routes`
 are added over a tracker — so chat and check-ins both route through the same
 deterministic safety layers above the HTTP boundary.
 
+Static serving (stage 6e): when ``static_dir`` points at a directory (the
+built SPA in ``web/dist``), a ``StaticFiles`` mount with an ``index.html``
+fallback is added LAST, so every API route registered above it wins — the
+``GET /chat`` (SPA) vs ``POST /chat`` (API) collision resolves by registration
+order exactly as the dev proxy resolves it by method. Without ``static_dir``
+(or when the directory is missing) the app is API-only, byte-for-byte the
+same route table as before this option existed.
+
 Single-user local v1 by design (not accident): no auth, CORS, or rate
 limiting — the service serves localhost and must sit behind a reverse proxy
 before any wider exposure. The tracker defaults to in-memory (dev); pass
@@ -14,10 +22,12 @@ before any wider exposure. The tracker defaults to in-memory (dev); pass
 ``app.state.store`` and closed by the shutdown handler registered here.
 """
 
+import os
 from collections.abc import Callable
 from pathlib import Path
 
 from fastapi import FastAPI
+from starlette.staticfiles import StaticFiles
 
 from reframe.api.app import create_app
 from reframe.api.measure import include_measurement_routes
@@ -29,11 +39,36 @@ from reframe.measurement.tracker import CheckInTracker
 from reframe.pipeline import ConversationPipeline
 
 
+class _SpaStaticFiles(StaticFiles):
+    """``StaticFiles`` with an SPA deep-link fallback to ``index.html``.
+
+    Plain ``StaticFiles`` 404s on client routes like ``/chat`` because they
+    are not files on disk. Falling back at *lookup* time serves the shell for
+    any path that is not a real file, while real files (hashed assets,
+    ``favicon.svg``) resolve normally. API routes never reach this class when
+    they are registered before the mount; requests that do reach it and find
+    no file are, by definition, SPA routes.
+
+    Trade-off (accepted, standard for generic SPA fallbacks): a genuinely
+    missing asset under ``/assets/`` gets ``index.html`` (``text/html``) back
+    and its script tag fails to parse loudly instead of 404-ing — a stale
+    hashed URL after a redeploy, never a silent wrong-file serve.
+    """
+
+    def lookup_path(self, path: str) -> tuple[str, os.stat_result | None]:
+        """Resolve ``path`` inside the served directory, else the SPA shell."""
+        full_path, stat_result = super().lookup_path(path)
+        if stat_result is None:
+            return super().lookup_path("index.html")
+        return full_path, stat_result
+
+
 def create_service(
     *,
     generator: ConstrainedGenerator,
     tracker_factory: Callable[[], CheckInTracker] | None = None,
     db_path: str | Path | None = None,
+    static_dir: Path | None = None,
 ) -> FastAPI:
     """Build the composed service app around ``generator``.
 
@@ -44,6 +79,11 @@ def create_service(
     was created — is attached to ``app.state.store`` and closed by the
     shutdown handler, so a server shutdown (or a test's ``TestClient``
     context) releases the SQLite connection.
+
+    Static serving: when ``static_dir`` is an existing directory it is mounted
+    at ``/`` LAST (after every API route), serving the built SPA with a
+    ``index.html`` fallback for client routes. A ``None``/missing/non-directory
+    value leaves the app API-only — the mount never silently half-configures.
 
     Safety routing is unchanged by composition: the pipeline decides crisis
     bypass and human review before any generation, and check-in routing is
@@ -69,4 +109,9 @@ def create_service(
             app.state.store.close()
 
     app.router.add_event_handler("shutdown", _close_store_on_shutdown)
+
+    # LAST: the SPA mount must never shadow a registered API route (see the
+    # module docstring — GET /chat falls through here, POST /chat never does).
+    if static_dir is not None and static_dir.is_dir():
+        app.mount("/", _SpaStaticFiles(directory=static_dir, html=True))
     return app

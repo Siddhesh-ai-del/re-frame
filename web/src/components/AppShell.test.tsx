@@ -56,6 +56,20 @@ describe('AppShell', () => {
     ).not.toHaveAttribute('aria-current', 'page')
   })
 
+  it('styles the active route with the AA-safe accent text on the soft tint', () => {
+    // Stage 6e a11y: `--accent` on `--accent-soft` is 4.19:1 (axe-flagged);
+    // the active state must use the derived `text-accent-ink` token instead.
+    render(<App />)
+    // Whichever route the shared jsdom location lands on, exactly one nav
+    // link carries aria-current="page" — that is the one with the tint.
+    const active = within(screen.getByRole('navigation')).getByRole('link', {
+      current: 'page',
+    })
+    expect(active.className).toContain('bg-accent-soft')
+    expect(active.className).toContain('text-accent-ink')
+    expect(active.className).not.toMatch(/(^|\s)text-accent(\s|$)/)
+  })
+
   it('navigates to /chat on click and renders the Chat heading', async () => {
     const user = userEvent.setup()
     render(<App />)

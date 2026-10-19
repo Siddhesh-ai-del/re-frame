@@ -15,6 +15,11 @@
   --ink-muted: #59615B;
   --accent: #4A7C59;
   --accent-soft: #E8F0EA;
+  /* Derived text token (stage 6e a11y): accent TEXT over --accent-soft
+     selected/tinted states. The doc-pinned pair (#4A7C59 on #E8F0EA) is
+     4.19:1 — below AA for normal text — so this darker sage (5.37:1 over
+     the tint) carries it. Contrast-pinned by src/styles/contrast.test.ts. */
+  --accent-ink: #3E6A4C;
   --warning: #7A5B14;
   --warning-soft: #F6EFDC;
   --crisis: #A33A32;

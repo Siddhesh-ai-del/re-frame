@@ -20,8 +20,13 @@ LLM key policy, driven by the actual ``reframe.config`` behavior:
   WITHOUT starting the server (fail closed — a chat service never serves
   half-configured in production).
 - With a key, the generator wraps ``OpenAICompatibleClient``; its base URL and
-  model are the module constants below (the config module exposes only the
-  key, so those are the only knobs v1 has).
+  model default to the module constants below and are overridable per
+  environment through ``REFRAME_LLM_BASE_URL`` / ``REFRAME_LLM_MODEL`` (both
+  validated by ``reframe.config`` — a non-``http(s)`` base URL is rejected
+  before anything is built).
+- ``--static <dir>`` serves a built SPA (``web/dist``) from the same process:
+  the composed service mounts it last, so every registered API route wins and
+  unknown GETs fall through to ``index.html``.
 
 ``uvicorn`` is imported lazily inside :func:`_run_uvicorn` — the seam tests
 monkeypatch instead of starting a server — so importing this module never
@@ -31,6 +36,7 @@ pulls in server machinery.
 import argparse
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 
 from fastapi import FastAPI
 
@@ -44,7 +50,7 @@ from reframe.generation import (
     OpenAICompatibleClient,
 )
 
-#: v1 endpoint defaults for the OpenAI-compatible API (config exposes only the key).
+#: v1 endpoint defaults for the OpenAI-compatible API (overridable via config).
 LLM_BASE_URL = "https://api.openai.com/v1"
 LLM_MODEL = "gpt-4o-mini"
 
@@ -89,6 +95,12 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--port", type=int, default=8000, help="TCP port, 1..65535")
     parser.add_argument("--db", default="reframe.db", help="SQLite check-in database path")
     parser.add_argument("--log-level", default="info", help="uvicorn log level")
+    parser.add_argument(
+        "--static",
+        default=None,
+        metavar="DIR",
+        help="directory with the built SPA (web/dist) to serve from the API app",
+    )
     return parser
 
 
@@ -129,14 +141,20 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if settings.api_key is not None:
         client = OpenAICompatibleClient(
-            base_url=LLM_BASE_URL, api_key=settings.api_key, model=LLM_MODEL
+            base_url=settings.llm_base_url or LLM_BASE_URL,
+            api_key=settings.api_key,
+            model=settings.llm_model or LLM_MODEL,
         )
         generator: ConstrainedGenerator = ConstrainedGenerator(client)
     else:
         print(NOTICE_NO_API_KEY, file=sys.stderr)
         generator = _UnconfiguredGenerator()
 
-    app = create_service(generator=generator, db_path=args.db)
+    app = create_service(
+        generator=generator,
+        db_path=args.db,
+        static_dir=Path(args.static) if args.static is not None else None,
+    )
     _run_uvicorn(app, host=args.host, port=args.port, log_level=args.log_level)
     return 0
 

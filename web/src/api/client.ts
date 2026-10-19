@@ -15,6 +15,15 @@ import type { components } from './schema.d'
 export type ChatResponse = components['schemas']['ChatResponse']
 export type ResourceOut = components['schemas']['ResourceOut']
 export type ExerciseOut = components['schemas']['ExerciseOut']
+export type InstrumentOut = components['schemas']['InstrumentOut']
+export type CheckInOut = components['schemas']['CheckInOut']
+export type CheckInRequest = components['schemas']['CheckInRequest']
+export type CheckInPurgeOut = components['schemas']['CheckInPurgeOut']
+export type HealthResponse = components['schemas']['HealthResponse']
+
+/** The fixed, honest copy for a refused check-in (stage 6d). */
+export const CHECKIN_BAD_REQUEST_MESSAGE =
+  "Your check-in couldn't be sent. Please try again."
 
 /** 422: the message was malformed or refused before the pipeline ran. */
 export class BadRequestError extends Error {
@@ -102,4 +111,105 @@ export async function fetchExercises(): Promise<ExerciseOut[]> {
   }
   const body = (await response.json()) as { exercises: ExerciseOut[] }
   return body.exercises
+}
+
+/**
+ * Fetch the full instrument catalog (GET /instruments) — the form-ready
+ * specs (items, answer options, bands, citation) behind /check-ins.
+ * Error mapping matches fetchResources.
+ */
+export async function fetchInstruments(): Promise<InstrumentOut[]> {
+  let response: Response
+  try {
+    response = await fetch('/instruments')
+  } catch {
+    throw new NetworkError()
+  }
+  if (!response.ok) {
+    throw new ApiUnavailableError()
+  }
+  const body = (await response.json()) as { instruments: InstrumentOut[] }
+  return body.instruments
+}
+
+/**
+ * Fetch one instrument's check-in history (GET /checkins/{instrument_id}),
+ * oldest to newest as the service returns it. A 404 (unknown instrument)
+ * maps to ApiUnavailableError like every other non-ok status — the UI only
+ * asks for ids it got from GET /instruments, and the server's `detail`
+ * never becomes client copy.
+ */
+export async function fetchCheckinHistory(instrumentId: string): Promise<CheckInOut[]> {
+  let response: Response
+  try {
+    response = await fetch(`/checkins/${encodeURIComponent(instrumentId)}`)
+  } catch {
+    throw new NetworkError()
+  }
+  if (!response.ok) {
+    throw new ApiUnavailableError()
+  }
+  const body = (await response.json()) as { checkins: CheckInOut[] }
+  return body.checkins
+}
+
+/**
+ * Record one check-in (POST /checkins). 200 → the typed CheckInOut (score,
+ * flags, routing action, verbatim `message`); 422 → BadRequestError with our
+ * own fixed copy; 503/500/other → ApiUnavailableError; rejected fetch →
+ * NetworkError — the chat pattern exactly.
+ */
+export async function submitCheckin(request: CheckInRequest): Promise<CheckInOut> {
+  let response: Response
+  try {
+    response = await fetch('/checkins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    })
+  } catch {
+    throw new NetworkError()
+  }
+  if (response.ok) {
+    return (await response.json()) as CheckInOut
+  }
+  if (response.status === 422) {
+    throw new BadRequestError(CHECKIN_BAD_REQUEST_MESSAGE)
+  }
+  throw new ApiUnavailableError()
+}
+
+/**
+ * Fetch liveness + package version (GET /health) for the Settings about
+ * section. Error mapping matches fetchResources.
+ */
+export async function fetchHealth(): Promise<HealthResponse> {
+  let response: Response
+  try {
+    response = await fetch('/health')
+  } catch {
+    throw new NetworkError()
+  }
+  if (!response.ok) {
+    throw new ApiUnavailableError()
+  }
+  return (await response.json()) as HealthResponse
+}
+
+/**
+ * Purge every recorded check-in (DELETE /checkins) and return how many rows
+ * the service removed. No request body; error mapping matches fetchResources.
+ */
+export async function purgeCheckins(): Promise<number> {
+  let response: Response
+  try {
+    response = await fetch('/checkins', { method: 'DELETE' })
+  } catch {
+    throw new NetworkError()
+  }
+  if (!response.ok) {
+    throw new ApiUnavailableError()
+  }
+  const body = (await response.json()) as CheckInPurgeOut
+  return body.deleted
 }

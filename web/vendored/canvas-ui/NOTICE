@@ -1,0 +1,26 @@
+These files are not covered by the repository's Apache-2.0 license.
+Licensed MIT + Commons Clause v1.0 (David Haz) and used inside the
+RE:FRAME application per the Commons Clause permission; not sold or
+redistributed as a component library.
+
+Provenance: Clouds.tsx was obtained from the Canvas UI project
+(https://canvasui.dev — source JSON fetched from
+https://canvasui.dev/r/clouds-react.json) and vendored here verbatim.
+LICENSE.md is a verbatim copy of the upstream license text
+(https://raw.githubusercontent.com/DavidHDev/canvas-ui/main/LICENSE.md).
+
+Minimal adaptations applied by RE:FRAME (behavior-preserving):
+- `type CSSProperties` is imported from "react" and the `style` prop is
+  typed with it (upstream referenced `React.CSSProperties` without the
+  namespace import).
+- A `// @ts-nocheck` header disables TypeScript checking of this file
+  under RE:FRAME's stricter settings (noUncheckedIndexedAccess); the
+  upstream sources are left otherwise untouched so they stay comparable
+  to their origin.
+- One empty `catch {}` block gained an explanatory comment so ESLint's
+  no-empty rule is satisfied (RE:FRAME's ESLint config additionally
+  ignores the vendored/ directory; both measures are defense in depth).
+
+The wrapper that mounts this component inside the application is
+src/effects/FrostClouds.tsx (RE:FRAME code, covered by the repository's
+own license and test suite).

@@ -18,3 +18,24 @@
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     sans-serif;
 }
+
+/*
+ * Ambient aurora (stage 6d, opensourceui-adapted): a very slow gradient
+ * drift behind all content. Applied ONLY via the `animate-aurora` class,
+ * which AmbientBackground removes from the DOM under reduced effects — the
+ * keyframes are never triggered when motion is off. Tokens only: the layers
+ * use --accent-soft / --surface-sunk over --bg, so text contrast on top of
+ * the page is unchanged (the layer sits behind content at -z-10).
+ */
+.animate-aurora {
+  animation: reframe-aurora-drift 24s ease-in-out infinite alternate;
+}
+
+@keyframes reframe-aurora-drift {
+  from {
+    transform: translate3d(-2%, -1%, 0) scale(1.04);
+  }
+  to {
+    transform: translate3d(2%, 1%, 0) scale(1.08);
+  }
+}

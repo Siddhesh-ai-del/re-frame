@@ -154,6 +154,23 @@
             }
           }
         }
+      },
+      "delete": {
+        "summary": "Purge Checkins",
+        "description": "Purge every recorded check-in and return how many were removed.\n\nRouted through ``tracker.delete_all`` so the durable tracker empties\nits SQLite store and its in-memory mirror together (no rows can\nresurrect on restart) while the in-memory dev tracker empties its\nrecords. The route takes no path parameter, so there is no\ninstrument-id to validate: the per-instrument 404 contract of\n``GET /checkins/{instrument_id}`` is unchanged.",
+        "operationId": "purge_checkins_checkins_delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInPurgeOut"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/checkins/{instrument_id}": {
@@ -374,6 +391,20 @@
         ],
         "title": "CheckInOut",
         "description": "One recorded check-in: raw data, score, flags, and its routing decision.\n\n``action``/``message_id``/``message`` come from the pre-specified routing\ntable applied to this check-in's flags — the client escalates on these,\nnever on ``total`` alone. ``message`` is ``None`` exactly when the route\nis ``proceed``."
+      },
+      "CheckInPurgeOut": {
+        "properties": {
+          "deleted": {
+            "type": "integer",
+            "title": "Deleted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "deleted"
+        ],
+        "title": "CheckInPurgeOut",
+        "description": "Result of purging every recorded check-in: how many rows were removed."
       },
       "CheckInRequest": {
         "properties": {

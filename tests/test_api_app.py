@@ -10,11 +10,14 @@ The v1 service runs behind a reverse proxy / on localhost, so there is no auth,
 CORS, or rate limiting here (Stage 6/7 scope).
 """
 
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
 import reframe
 from reframe.api.app import create_app
+from reframe.api.service import create_service
 from reframe.content import default_library
 from reframe.content.schema import EvidenceTier, ExerciseCategory
 from reframe.generation import (
@@ -23,6 +26,7 @@ from reframe.generation import (
     GenerationRequest,
     GenerationResponse,
 )
+from reframe.measurement.store import SqliteCheckInStore
 from reframe.pipeline import ConversationPipeline, PipelineOutcome
 from reframe.pipeline.messages import CRISIS_RESPONSE
 from reframe.safety.resources import DEFAULT_CRISIS_RESOURCES
@@ -301,3 +305,68 @@ def test_app_metadata_stays_in_the_wellness_lane() -> None:
     assert "wellness" in description
     for forbidden in ("diagnose", "therapy", "treatment", "prescrib"):
         assert forbidden not in description
+
+
+# ---------------------------------------------------------------------------
+# DELETE /checkins — purge every recorded check-in (stage 6d)
+# ---------------------------------------------------------------------------
+
+
+def _purge_client(db_path: Path | None = None) -> TestClient:
+    """A composed service client (scripted fake LLM), durable or in-memory."""
+    generator = ConstrainedGenerator(FakeClient([WELL_BEHAVED_REPLY]))
+    return TestClient(create_service(generator=generator, db_path=db_path))
+
+
+def _checkin_body(date: str) -> dict[str, object]:
+    return {"instrument_id": "phq9", "responses": [0] * 9, "date": date}
+
+
+def test_delete_checkins_purges_the_prior_count_and_empties_history(tmp_path: Path) -> None:
+    with _purge_client(tmp_path / "purge.db") as client:
+        for date in ("2026-10-17", "2026-10-18"):
+            assert client.post("/checkins", json=_checkin_body(date)).status_code == 200
+
+        response = client.delete("/checkins")
+
+        assert response.status_code == 200
+        assert response.json() == {"deleted": 2}
+        assert client.get("/checkins/phq9").json() == {"checkins": []}
+
+
+def test_delete_checkins_is_idempotent_and_reports_zero_the_second_time(
+    tmp_path: Path,
+) -> None:
+    with _purge_client(tmp_path / "purge-twice.db") as client:
+        assert client.post("/checkins", json=_checkin_body("2026-10-18")).status_code == 200
+        assert client.delete("/checkins").json() == {"deleted": 1}
+        assert client.delete("/checkins").json() == {"deleted": 0}
+
+
+def test_delete_checkins_empties_the_durabale_rows_not_only_memory(tmp_path: Path) -> None:
+    path = tmp_path / "purge-durable.db"
+    with _purge_client(path) as client:
+        assert client.post("/checkins", json=_checkin_body("2026-10-18")).status_code == 200
+        assert client.delete("/checkins").json() == {"deleted": 1}
+    # Reopening after shutdown proves the rows are gone from SQLite itself.
+    inspector = SqliteCheckInStore(path)
+    try:
+        assert inspector.load() == ()
+    finally:
+        inspector.close()
+
+
+def test_delete_checkins_works_on_the_in_memory_dev_default() -> None:
+    with _purge_client() as client:
+        assert client.post("/checkins", json=_checkin_body("2026-10-18")).status_code == 200
+        response = client.delete("/checkins")
+        assert response.status_code == 200
+        assert response.json() == {"deleted": 1}
+        assert client.get("/checkins/phq9").json() == {"checkins": []}
+
+
+def test_delete_checkins_on_an_empty_service_returns_zero() -> None:
+    with _purge_client() as client:
+        response = client.delete("/checkins")
+        assert response.status_code == 200
+        assert response.json() == {"deleted": 0}

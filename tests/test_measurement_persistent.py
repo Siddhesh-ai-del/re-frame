@@ -37,6 +37,7 @@ class RecordingStore:
     ) -> None:
         self.loaded = tuple(loaded)
         self.calls: list[CheckIn] = []
+        self.delete_calls = 0
         self.append_error = append_error
         self.load_error = load_error
 
@@ -49,6 +50,12 @@ class RecordingStore:
         if self.load_error is not None:
             raise self.load_error
         return self.loaded
+
+    def delete_all(self) -> int:
+        self.delete_calls += 1
+        removed = len(self.loaded)
+        self.loaded = ()
+        return removed
 
     def close(self) -> None:
         return None
@@ -254,3 +261,43 @@ def test_custom_policy_reaches_the_parent_and_drives_early_worsening() -> None:
     # one: the absence of the flag proves the custom policy reached the parent.
     day_ten = tracker.record("phq9", _phq9(total=10), DAY_ONE + datetime.timedelta(days=10))
     assert day_ten.flags == ()
+
+
+# ---------------------------------------------------------------- delete_all
+
+
+def test_delete_all_delegates_to_the_store_and_clears_memory() -> None:
+    first = _checkin(DAY_ONE)
+    second = _checkin(DAY_ONE + datetime.timedelta(days=3), total=4, severity_label="mild")
+    store = RecordingStore(loaded=[first, second])
+    tracker = PersistentCheckInTracker(store)
+
+    assert tracker.delete_all() == 2
+    assert store.delete_calls == 1
+    with pytest.raises(ValueError, match="no check-ins recorded"):
+        tracker.history("phq9")
+    assert tracker.to_dict() == {"checkins": []}
+
+
+def test_delete_all_purges_the_sqlite_rows_and_not_only_memory(tmp_path: Path) -> None:
+    path = tmp_path / "purge.db"
+    store = SqliteCheckInStore(path)
+    tracker = PersistentCheckInTracker(store)
+    tracker.record("phq9", _phq9(total=0), DAY_ONE)
+    tracker.record("phq9", _phq9(total=3), DAY_ONE + datetime.timedelta(days=1))
+
+    assert tracker.delete_all() == 2
+    assert store.load() == ()
+    with pytest.raises(ValueError, match="no check-ins recorded"):
+        tracker.history("phq9")
+    store.close()
+
+
+def test_delete_all_is_idempotent_through_the_persistent_tracker(tmp_path: Path) -> None:
+    store = SqliteCheckInStore(tmp_path / "purge-twice.db")
+    tracker = PersistentCheckInTracker(store)
+    tracker.record("phq9", _phq9(total=0), DAY_ONE)
+
+    assert tracker.delete_all() == 1
+    assert tracker.delete_all() == 0
+    store.close()

@@ -43,7 +43,7 @@ def _is_plain_int(value: object) -> bool:
 
 
 class CheckInStore(Protocol):
-    """Persistence contract for recorded check-ins: append-only, ordered load."""
+    """Persistence contract for recorded check-ins: append, ordered load, purge."""
 
     def append(self, checkin: CheckIn) -> None:
         """Durably persist one check-in; raise on failure (no suppression)."""
@@ -51,6 +51,10 @@ class CheckInStore(Protocol):
 
     def load(self) -> tuple[CheckIn, ...]:
         """All stored check-ins in insertion order; raise on any malformed row."""
+        ...
+
+    def delete_all(self) -> int:
+        """Remove every stored check-in; return the number of rows removed."""
         ...
 
     def close(self) -> None:
@@ -104,6 +108,18 @@ class SqliteCheckInStore:
             for row in rows:
                 checkins.append(self._checkin_from_row(row))
             return tuple(checkins)
+
+    def delete_all(self) -> int:
+        """Delete every stored check-in (inside the lock); return the row count.
+
+        A purge on an empty table is a no-op returning ``0`` — idempotent by
+        construction. The commit happens before the count is returned, so a
+        reported deletion is durable.
+        """
+        with self._lock:
+            cursor = self._connection.execute("DELETE FROM checkins")
+            self._connection.commit()
+            return int(cursor.rowcount)
 
     def close(self) -> None:
         """Close the connection (inside the lock, like every access)."""

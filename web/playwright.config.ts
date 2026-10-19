@@ -30,7 +30,11 @@ const backendOrigin = `http://127.0.0.1:${backendPort}`
 
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: true,
+  // Stage 6d: the check-in specs share ONE SQLite database (the backend
+  // writes check-ins that later specs read and purge), so tests must not
+  // interleave — serial execution across files and within each file.
+  fullyParallel: false,
+  workers: 1,
   retries: process.env.CI ? 1 : 0,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {

@@ -223,3 +223,59 @@ def test_two_stores_on_the_same_path_see_all_rows(tmp_path: Path) -> None:
     finally:
         first.close()
         second.close()
+
+
+# ------------------------------------------------------------- delete_all
+
+
+def test_delete_all_returns_the_number_of_rows_deleted(tmp_path: Path) -> None:
+    store: CheckInStore = SqliteCheckInStore(tmp_path / "purge.db")
+    try:
+        store.append(_checkin())
+        store.append(_checkin(date=DAY_ONE + datetime.timedelta(days=1), total=3))
+        assert store.delete_all() == 2
+    finally:
+        store.close()
+
+
+def test_load_is_empty_after_delete_all(tmp_path: Path) -> None:
+    store = SqliteCheckInStore(tmp_path / "purge-empty.db")
+    try:
+        store.append(_checkin(total=9, severity_label="mild"))
+        assert store.delete_all() == 1
+        assert store.load() == ()
+    finally:
+        store.close()
+
+
+def test_delete_all_is_idempotent_second_call_returns_zero(tmp_path: Path) -> None:
+    store = SqliteCheckInStore(tmp_path / "purge-twice.db")
+    try:
+        store.append(_checkin())
+        assert store.delete_all() == 1
+        assert store.delete_all() == 0
+        assert store.load() == ()
+    finally:
+        store.close()
+
+
+def test_delete_all_on_an_empty_database_returns_zero(tmp_path: Path) -> None:
+    store = SqliteCheckInStore(tmp_path / "purge-fresh.db")
+    try:
+        assert store.delete_all() == 0
+    finally:
+        store.close()
+
+
+def test_purge_survives_close_and_reopen_on_the_same_path(tmp_path: Path) -> None:
+    path = tmp_path / "purge-durable.db"
+    first = SqliteCheckInStore(path)
+    first.append(_checkin())
+    assert first.delete_all() == 1
+    first.close()
+
+    second = SqliteCheckInStore(path)
+    try:
+        assert second.load() == ()
+    finally:
+        second.close()

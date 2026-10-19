@@ -267,3 +267,25 @@ def test_checkin_is_frozen() -> None:
     with pytest.raises(FrozenInstanceError):
         checkin.total = 5  # type: ignore[misc]
     assert isinstance(checkin, CheckIn)
+
+
+# ---------------------------------------------------------------- delete_all
+
+
+def test_delete_all_clears_every_instrument_and_returns_the_count() -> None:
+    tracker = CheckInTracker()
+    tracker.record("phq9", _phq9(total=0), DAY_ONE)
+    tracker.record("phq9", _phq9(total=3), DAY_ONE)
+    tracker.record("gad7", _gad7(total=0), DAY_ONE)
+
+    assert tracker.delete_all() == 3
+    with pytest.raises(ValueError, match="no check-ins recorded"):
+        tracker.history("phq9")
+    with pytest.raises(ValueError, match="no check-ins recorded"):
+        tracker.history("gad7")
+    assert tracker.baseline("phq9") is None
+    assert tracker.to_dict() == {"checkins": []}
+
+
+def test_delete_all_on_an_empty_tracker_returns_zero() -> None:
+    assert CheckInTracker().delete_all() == 0

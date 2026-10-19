@@ -20,6 +20,10 @@ boundary:
 - ``GET /checkins/{instrument_id}`` replays history with routing recomputed
   per entry; unknown instrument ids are 404, a valid instrument with no
   check-ins is an empty 200 list.
+- ``DELETE /checkins`` purges every recorded check-in (all instruments) and
+  returns the number removed; it takes no path parameter, so no
+  instrument-id validation applies — the GET history contract above is
+  untouched.
 
 Every record-level failure (unknown instrument, bad responses, out-of-order
 date) maps to one generic 422 detail — no internals, no repr of input.
@@ -148,6 +152,12 @@ class CheckInListOut(BaseModel):
     checkins: list[CheckInOut]
 
 
+class CheckInPurgeOut(BaseModel):
+    """Result of purging every recorded check-in: how many rows were removed."""
+
+    deleted: int
+
+
 def _to_instrument_out(spec: InstrumentSpec) -> InstrumentOut:
     """Map a frozen ``InstrumentSpec`` onto the wire ``InstrumentOut``."""
     return InstrumentOut(
@@ -196,7 +206,10 @@ def include_measurement_routes(app: FastAPI, tracker: CheckInTracker) -> None:
     ``tracker.record`` ``ValueError`` (unknown instrument, invalid
     responses, out-of-order date) becomes a generic 422;
     ``GET /checkins/{instrument_id}`` validates the instrument id first so a
-    valid instrument with no check-ins is an empty list, not an error.
+    valid instrument with no check-ins is an empty list, not an error;
+    ``DELETE /checkins`` purges through the tracker itself, so a durable
+    tracker empties its store and its memory together while an in-memory
+    tracker empties its records — one honest count either way.
     """
 
     @app.get("/instruments", response_model=InstrumentListOut)
@@ -226,3 +239,16 @@ def include_measurement_routes(app: FastAPI, tracker: CheckInTracker) -> None:
         baseline = tracker.baseline(instrument_id)
         history = tracker.history(instrument_id) if baseline is not None else ()
         return CheckInListOut(checkins=[_to_checkin_out(entry) for entry in history])
+
+    @app.delete("/checkins", response_model=CheckInPurgeOut)
+    def purge_checkins() -> CheckInPurgeOut:
+        """Purge every recorded check-in and return how many were removed.
+
+        Routed through ``tracker.delete_all`` so the durable tracker empties
+        its SQLite store and its in-memory mirror together (no rows can
+        resurrect on restart) while the in-memory dev tracker empties its
+        records. The route takes no path parameter, so there is no
+        instrument-id to validate: the per-instrument 404 contract of
+        ``GET /checkins/{instrument_id}`` is unchanged.
+        """
+        return CheckInPurgeOut(deleted=tracker.delete_all())

@@ -114,3 +114,12 @@ export function useReducedEffects(): ReducedEffectsValue {
   }
   return context
 }
+
+/**
+ * Non-throwing variant for purely decorative layers (stage 6d). A background
+ * effect that mounts outside the provider must still render — it just falls
+ * back to "effects allowed" rather than crashing the tree.
+ */
+export function useOptionalReducedEffects(): ReducedEffectsValue | null {
+  return useContext(EffectsContext)
+}

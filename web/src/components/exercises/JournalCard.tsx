@@ -3,67 +3,24 @@
  * (MIT) writing-card — reshaped to the RE:FRAME privacy contract.
  *
  * PRIVACY (design §5.6, CRITICAL): journal text lives ONLY in
- * `localStorage['reframe:journal']` (a JSON array of {id, text, createdAt}).
- * It is never sent anywhere — no fetch, no beacon, nothing. The UI says so
+ * `localStorage['reframe:journal']` (see `lib/journal.ts` — the shared
+ * read/write/export/clear helpers this card and Settings both use). It is
+ * never sent anywhere — no fetch, no beacon, nothing. The UI says so
  * plainly, and a fetch-spy test proves it.
  *
  * Fail-closed storage: corrupt or unexpected stored JSON renders as an empty
- * list (never a crash, never half-parsed garbage). Export (a .md Blob
- * download) and delete-all live on the card for now (Settings wiring is 6d).
- * The timestamp display is locale-formatted from the stored ISO string.
+ * list (never a crash, never half-parsed garbage). The timestamp display is
+ * locale-formatted from the stored ISO string.
  */
 import { useCallback, useEffect, useState } from 'react'
-
-const STORAGE_KEY = 'reframe:journal'
-
-export interface JournalEntry {
-  id: string
-  text: string
-  createdAt: string
-}
-
-function isEntry(value: unknown): value is JournalEntry {
-  if (typeof value !== 'object' || value === null) return false
-  const record = value as Record<string, unknown>
-  return (
-    typeof record.id === 'string' &&
-    typeof record.text === 'string' &&
-    typeof record.createdAt === 'string'
-  )
-}
-
-/** Read the stored entries; ANY malformed shape fails closed to an empty list. */
-export function loadEntries(storage: Pick<Storage, 'getItem'>): JournalEntry[] {
-  try {
-    const raw = storage.getItem(STORAGE_KEY)
-    if (raw === null) return []
-    const parsed: unknown = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter(isEntry)
-  } catch {
-    // Corrupt JSON (or a storage that throws): fail closed to empty.
-    return []
-  }
-}
-
-function makeEntry(text: string): JournalEntry {
-  const randomSuffix =
-    typeof crypto !== 'undefined' && 'randomUUID' in crypto
-      ? crypto.randomUUID()
-      : Math.random().toString(36).slice(2)
-  return {
-    id: `${Date.now()}-${randomSuffix}`,
-    text,
-    createdAt: new Date().toISOString(),
-  }
-}
-
-function toMarkdown(entries: JournalEntry[]): string {
-  const lines = entries.map(
-    (entry) => `## ${new Date(entry.createdAt).toLocaleString()}\n\n${entry.text}\n`,
-  )
-  return `# RE:FRAME journal\n\nYour entries, exported from this device.\n\n${lines.join('\n')}`
-}
+import {
+  appendEntry,
+  clearEntries,
+  exportJournal,
+  loadEntries,
+  persistEntries,
+} from '../../lib/journal'
+import type { JournalEntry } from '../../lib/journal'
 
 export function JournalCard() {
   const [entries, setEntries] = useState<JournalEntry[]>(() =>
@@ -74,15 +31,10 @@ export function JournalCard() {
 
   const save = useCallback(() => {
     if (trimmed.length === 0) return
-    const entry = makeEntry(trimmed)
     setEntries((previous) => {
-      const next = [...previous, entry]
       // Write-through: the device-local store is the only destination.
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-      } catch {
-        // Storage unavailable (privacy mode): the session copy still shows.
-      }
+      const next = appendEntry(previous, trimmed)
+      persistEntries(window.localStorage, next)
       return next
     })
     setDraft('')
@@ -90,29 +42,17 @@ export function JournalCard() {
 
   const deleteAll = useCallback(() => {
     setEntries([])
-    try {
-      window.localStorage.removeItem(STORAGE_KEY)
-    } catch {
-      // Storage unavailable: the in-session list is already cleared.
-    }
+    clearEntries(window.localStorage)
   }, [])
 
   const exportMarkdown = useCallback(() => {
-    const blob = new Blob([toMarkdown(entries)], { type: 'text/markdown' })
-    const url = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = 'reframe-journal.md'
-    document.body.appendChild(anchor)
-    anchor.click()
-    anchor.remove()
-    URL.revokeObjectURL(url)
+    exportJournal(entries)
   }, [entries])
 
   // Keep storage and state in step if another tab writes (best-effort).
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
-      if (event.key === STORAGE_KEY) setEntries(loadEntries(window.localStorage))
+      if (event.key === 'reframe:journal') setEntries(loadEntries(window.localStorage))
     }
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)

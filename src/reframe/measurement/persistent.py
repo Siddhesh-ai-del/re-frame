@@ -38,6 +38,9 @@ class PersistentCheckInTracker(CheckInTracker):
       per-instrument list is deleted) and the original exception re-raised
       bare — memory and store stay consistent. Callers see such failures as
       a generic HTTP 500 via the app's unhandled-exception handler.
+    - **Purge**: :meth:`delete_all` empties the store and the in-memory
+      mirror together under the lock (store first), returning the store's
+      rowcount — a purge never resurrects rows on restart.
     """
 
     def __init__(self, store: CheckInStore, policy: EarlyWorseningPolicy | None = None) -> None:
@@ -86,6 +89,20 @@ class PersistentCheckInTracker(CheckInTracker):
         """Parent behavior under the shared lock."""
         with self._lock:
             return super().baseline(instrument_id)
+
+    def delete_all(self) -> int:
+        """Purge the store AND the in-memory mirror under the lock.
+
+        The store's rowcount is the returned authority: ``record`` keeps the
+        two in step, so they always agree. The store purge runs FIRST — if it
+        raises, memory is untouched and the original exception propagates
+        unchanged (a loud failure via the app's handler, never a silent
+        half-purge that would resurrect rows on restart).
+        """
+        with self._lock:
+            deleted = self._store.delete_all()
+            self._records.clear()
+            return deleted
 
     def to_dict(self) -> dict[str, Any]:
         """Parent serialization semantics under the shared lock."""

@@ -140,6 +140,19 @@ class CheckInTracker:
         records = self._records.get(instrument_id)
         return records[0] if records else None
 
+    def delete_all(self) -> int:
+        """Drop every recorded check-in from memory; return how many were dropped.
+
+        The in-memory tracker holds no durable copy, so clearing its records
+        IS the complete purge. ``PersistentCheckInTracker`` overrides this to
+        purge its store as well (memory and disk stay in step — a purge must
+        not resurrect rows on the next restart). Idempotent: an empty tracker
+        purges to ``0``.
+        """
+        removed = sum(len(records) for records in self._records.values())
+        self._records.clear()
+        return removed
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize every check-in (flags as their string values). The policy
         is not serialized — pass it back to :meth:`from_dict` explicitly."""

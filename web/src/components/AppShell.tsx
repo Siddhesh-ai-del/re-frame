@@ -26,8 +26,10 @@ export function AppShell() {
       ? pathname === '/' || pathname === '/welcome'
       : pathname === to
 
+  // No bg-bg on the root wrapper (stage 6d): the AmbientBackground aurora
+  // sits directly on the <html> background; a solid bg here would cover it.
   return (
-    <div className="flex min-h-screen flex-col bg-bg text-ink">
+    <div className="flex min-h-screen flex-col text-ink">
       <header
         aria-label="RE:FRAME"
         className="border-b border-border bg-surface"

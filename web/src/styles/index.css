@@ -1,7 +1,9 @@
 @import 'tailwindcss';
 @import './tokens.css';
 
-/* Alias the design tokens as Tailwind utilities (bg-accent, text-ink, …). */
+/* Alias the design tokens as Tailwind utilities (bg-accent, text-ink, …).
+   Names are unchanged from the sage era — they pick up Golden Glass values
+   from tokens.css automatically (stage 6f spec §6). */
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -9,34 +11,212 @@
   --color-border: var(--border);
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);
+  --color-ink-on: var(--ink-on);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-accent-ink: var(--accent-ink);
+  --color-accent-bright: var(--accent-bright);
+  --color-cta-text: var(--cta-text);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
   --color-crisis: var(--crisis);
   --color-crisis-soft: var(--crisis-soft);
+  --color-panel: var(--panel);
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     sans-serif;
+  /* Display serif for h1 / section headings (spec §1) — literal value keeps
+     this from self-referencing the tokens.css var of the same name. */
+  --font-display: ui-serif, Georgia, 'Iowan Old Style', serif;
 }
 
-/*
- * Ambient aurora (stage 6d, opensourceui-adapted): a very slow gradient
- * drift behind all content. Applied ONLY via the `animate-aurora` class,
- * which AmbientBackground removes from the DOM under reduced effects — the
- * keyframes are never triggered when motion is off. Tokens only: the layers
- * use --accent-soft / --surface-sunk over --bg, so text contrast on top of
- * the page is unchanged (the layer sits behind content at -z-10).
- */
-.animate-aurora {
-  animation: reframe-aurora-drift 24s ease-in-out infinite alternate;
+/* ── Shape helpers ─────────────────────────────────────────────────────
+   Plain classes (not theme keys) because the token names would otherwise
+   collide with the theme-variable names Tailwind emits. */
+.rounded-pill {
+  border-radius: var(--radius-pill);
 }
 
-@keyframes reframe-aurora-drift {
+.max-w-page {
+  max-width: var(--width-page);
+}
+
+.max-w-reading {
+  max-width: var(--width-reading);
+}
+
+/* ── CTA gradient button (spec §1: --cta-start → --cta-end, --cta-text) ──
+   The only button surface allowed to carry the terracotta gradient. */
+.btn-cta {
+  background-image: linear-gradient(180deg, var(--cta-start), var(--cta-end));
+  color: var(--cta-text);
+}
+
+.btn-cta:hover:not(:disabled) {
+  background-image: linear-gradient(180deg, var(--cta-hover), var(--cta-hover));
+}
+
+/* Chat user bubble: the same verified gradient on a 135° sweep (spec §5). */
+.bubble-user {
+  background-image: linear-gradient(135deg, var(--cta-start), var(--cta-end));
+  color: var(--cta-text);
+}
+
+/* Warm panel card: ivory glass over the sky gradient (spec §5). */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Ambient landscape (spec §3): the ONLY animated layer is the haze wrapper,
+   which is dropped from the DOM under reduced effects — keyframes therefore
+   never run when motion is off. Everything else is static paint. */
+.animate-haze {
+  animation: reframe-haze-drift 24s ease-in-out infinite alternate;
+}
+
+@keyframes reframe-haze-drift {
   from {
     transform: translate3d(-2%, -1%, 0) scale(1.04);
   }
   to {
     transform: translate3d(2%, 1%, 0) scale(1.08);
   }
+}
+
+/* Sun: soft radial disc top-right with a wide warm glow (mockup backdrop). */
+.ambient-sun {
+  position: absolute;
+  top: 4vh;
+  right: 8vw;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 42% 38%,
+    var(--sun-core) 0%,
+    var(--sun-edge) 62%
+  );
+  box-shadow: 0 0 130px 56px var(--sun-glow);
+}
+
+/* Two blurred haze blobs — cheap on purpose (blur kept to one layer). */
+.haze-layer {
+  position: absolute;
+  inset: 0;
+  filter: blur(40px);
+  opacity: 0.5;
+}
+
+.haze-a,
+.haze-b {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--sun-glow), transparent 65%);
+}
+
+.haze-a {
+  width: 46vw;
+  height: 42vw;
+  top: 6%;
+  left: -14%;
+}
+
+.haze-b {
+  width: 38vw;
+  height: 36vw;
+  top: 40%;
+  right: -12%;
+}
+
+/* Topographic contours — crisp vectors give the lenses something to bend
+   (the `Contours`/`Contours2` generators from the approved mockup chrome). */
+.contours {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.6;
+}
+
+.contours path {
+  fill: none;
+  stroke: var(--contour);
+  stroke-width: 1.6;
+}
+
+.contours2 {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.45;
+}
+
+.contours2 path {
+  fill: none;
+  stroke: var(--contour-2);
+  stroke-width: 1.3;
+}
+
+/* Three layered hills anchored to the bottom of the fixed backdrop. */
+.hills {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 46vh;
+  overflow: hidden;
+}
+
+.ambient-hill {
+  position: absolute;
+  bottom: 0;
+  left: -6%;
+  right: -6%;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+}
+
+.hill-1 {
+  height: 34vh;
+  background: var(--hill-1);
+  opacity: 0.85;
+}
+
+.hill-2 {
+  height: 25vh;
+  left: -22%;
+  right: 28%;
+  background: var(--hill-2);
+}
+
+.hill-3 {
+  height: 18vh;
+  left: 36%;
+  right: -14%;
+  background: var(--hill-3);
+}
+
+/* Focus-breath ring: warm radial bead with a terracotta rim (spec §5). */
+.breath-ring {
+  background: radial-gradient(
+    circle at 34% 30%,
+    rgba(255, 255, 255, 0.9),
+    rgba(255, 240, 214, 0.55)
+  );
+  border: 3px solid var(--accent);
+}
+
+/* Native inputs restyled terracotta (spec §5 — real inputs stay in the
+   DOM for keyboard/Playwright interaction; only the paint changes). */
+input[type='radio'],
+input[type='checkbox'] {
+  accent-color: var(--accent);
+}
+
+/* Display headings: serif, bold, tight (spec §1). h2.section lets body copy
+   headings stay sans. */
+.font-display {
+  font-family: var(--font-display);
 }

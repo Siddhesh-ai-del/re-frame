@@ -167,7 +167,9 @@ export function CheckInsPage() {
       aria-label="Check-ins"
       className="mx-auto flex w-full max-w-page flex-col gap-6 px-6 py-8"
     >
-      <h1 className="text-3xl font-medium text-ink">Check-ins</h1>
+      <h1 className="font-display text-3xl font-bold tracking-[-0.01em] text-ink">
+        Check-ins
+      </h1>
 
       <DashboardStatusBar latest={latest} loading={historyLoading} failed={historyFailed} />
 
@@ -198,7 +200,7 @@ export function CheckInsPage() {
       {selected !== null && (
         <div className="flex flex-col gap-6 md:flex-row md:items-start">
           <div className="min-w-0 flex-1">
-            <h2 className="mb-2 text-xl font-medium text-ink">History</h2>
+            <h2 className="mb-2 font-display text-xl font-bold tracking-[-0.01em] text-ink">History</h2>
             <TrendChart
               entries={entries}
               totalMin={selected.total_min}

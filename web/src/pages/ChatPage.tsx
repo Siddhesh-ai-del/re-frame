@@ -125,7 +125,9 @@ export function ChatPage() {
       aria-label="Chat"
       className="mx-auto flex w-full max-w-[720px] flex-col gap-4 px-6 py-8"
     >
-      <h1 className="text-2xl font-medium text-ink">Chat</h1>
+      <h1 className="font-display text-3xl font-bold tracking-[-0.01em] text-ink">
+        Chat
+      </h1>
       {escalated && <CrisisBanner />}
       {messages.length === 0 ? (
         // Empty state (6c): the signature orb sits above the honest prompt.
@@ -152,7 +154,7 @@ export function ChatPage() {
       {notice !== null && (
         <p
           role="status"
-          className="rounded-[var(--radius-card)] border border-border bg-surface-sunk px-4 py-3 text-ink"
+          className="panel rounded-[var(--radius-card)] px-4 py-3 text-ink"
         >
           {notice}
         </p>

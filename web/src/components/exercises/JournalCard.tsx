@@ -59,8 +59,8 @@ export function JournalCard() {
   }, [])
 
   return (
-    <section aria-label="Journal" className="flex flex-col gap-3">
-      <h2 className="text-xl font-medium text-ink">Journal</h2>
+    <section aria-label="Journal" className="panel flex flex-col gap-3 rounded-[var(--radius-card)] p-5">
+      <h2 className="font-display text-xl font-bold tracking-[-0.01em] text-ink">Journal</h2>
       <p className="text-sm text-ink-muted">
         Your journal is stored only on this device. It is never sent anywhere.
       </p>
@@ -81,7 +81,7 @@ export function JournalCard() {
           type="button"
           onClick={save}
           disabled={trimmed.length === 0}
-          className="rounded-pill bg-accent px-4 py-2 text-sm text-bg transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50"
+          className="btn-cta rounded-pill px-4 py-2 text-sm font-semibold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Save entry
         </button>

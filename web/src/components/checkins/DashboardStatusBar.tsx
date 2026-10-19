@@ -27,7 +27,7 @@ export function DashboardStatusBar({ latest, loading, failed }: DashboardStatusB
   return (
     <section
       aria-label="Dashboard status"
-      className="rounded-[var(--radius-card)] border border-border bg-surface px-4 py-3"
+      className="panel rounded-[var(--radius-card)] px-4 py-3"
     >
       {loading && (
         <p role="status" className="text-sm text-ink-muted">

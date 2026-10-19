@@ -1,15 +1,19 @@
 /**
- * Stage 6e a11y contract: WCAG 2.2 AA contrast for the token pairs that carry
- * TEXT (docs/webapp-design.md §5.5 "axe-clean in E2E" — enforced here at the
- * unit level so a palette regression fails in `npm test`, not only in E2E).
+ * Golden Glass a11y contract (stage 6f): WCAG 2.2 AA contrast for the token
+ * pairs that carry TEXT, per .plans/stage-6f-golden-glass-spec.md §1/§2.
+ * Enforced at the unit level so a palette regression fails in `npm test`,
+ * not only in the axe E2E gate.
  *
- * Why `--accent-ink` exists (documented deviation): the design doc pins
- * `--accent: #4A7C59` and `--accent-soft: #E8F0EA`, and that pair measures
- * 4.19:1 — below the 4.5:1 required for normal-size text, which axe flagged
- * on all five routes (active nav links + selected instrument chips). The doc
- * is immutable this stage, so the FIX is a derived text token: accent text
- * over accent-soft backgrounds uses `--accent-ink`, a darker sage verified
- * here at ≥4.5:1 over both the tint and the page background.
+ * Two documented guards, kept from the sage era because the same anti-pattern
+ * exists in this palette too:
+ *  1. `--accent` on `--accent-soft` MUST stay < 4.5 (it is 4.48) — so
+ *     selected/tinted states use `--accent-ink` (6.12) for accent TEXT.
+ *  2. `--accent-bright` is decorative only (dots, gradients, chart bars) and
+ *     is never a text background.
+ *
+ * CTA gradient pairs are included as hex tokens (`--cta-start`, `--cta-end`,
+ * `--cta-text`) so the extractor can read them even though they render as a
+ * gradient background.
  *
  * Ratios use the WCAG 2.x relative-luminance formula (same as axe-core).
  */
@@ -17,10 +21,12 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
+// Strip /* … */ comments so token lines with inline rationale still match
+// the declaration regexes below (values stay byte-identical to the spec).
 const tokensCss = readFileSync(
   resolve(process.cwd(), 'src/styles/tokens.css'),
   'utf8',
-)
+).replace(/\/\*[\s\S]*?\*\//g, '')
 
 /** Extract a `--token: #RRGGBB;` declaration from tokens.css. */
 function token(name: string): string {
@@ -52,22 +58,27 @@ function contrast(a: string, b: string): number {
 
 /** Text pairs the UI actually renders, each required to clear AA (4.5:1). */
 const TEXT_PAIRS: ReadonlyArray<readonly [foreground: string, background: string]> = [
-  // The a11y fix (stage 6e): accent TEXT over accent-soft SELECTED states.
+  // Accent TEXT states (derived token — see guard below).
   ['--accent-ink', '--accent-soft'],
   ['--accent-ink', '--bg'],
-  // Existing contracts, pinned so the palette cannot silently regress.
   ['--accent', '--bg'],
   ['--accent', '--surface'],
+  // Primary ink.
   ['--ink', '--bg'],
   ['--ink', '--surface'],
+  ['--ink-on', '--ink'], // ink-pill text (active nav, selected chips)
   ['--ink-muted', '--bg'],
   ['--ink-muted', '--surface'],
   ['--ink-muted', '--surface-sunk'],
   ['--ink-muted', '--accent-soft'],
+  // Semantic surfaces (crisis banner, warning strip).
   ['--warning', '--warning-soft'],
   ['--warning', '--bg'],
   ['--crisis', '--crisis-soft'],
   ['--crisis', '--bg'],
+  // CTA gradient: light text over both stops (stage 6f).
+  ['--cta-text', '--cta-start'],
+  ['--cta-text', '--cta-end'],
 ]
 
 describe('token contrast (WCAG 2.2 AA)', () => {
@@ -81,10 +92,19 @@ describe('token contrast (WCAG 2.2 AA)', () => {
 
   it('exposes the derived accent text token for selected states', () => {
     // Guard the anti-pattern this token exists to prevent: selected states
-    // must not render `--accent` text on `--accent-soft` (4.19:1, axe-flagged).
+    // must not render `--accent` text on `--accent-soft` (4.48:1 — below AA).
     expect(contrast(token('--accent'), token('--accent-soft'))).toBeLessThan(4.5)
     expect(contrast(token('--accent-ink'), token('--accent-soft'))).toBeGreaterThanOrEqual(
       4.5,
     )
+  })
+
+  it('keeps accent-bright decorative-only (never a text background)', () => {
+    // #E8853C is too light to carry text at AA — it is allowed only for
+    // dots, gradients and chart fills (spec §1 "decorative only").
+    expect(contrast(token('--ink'), token('--accent-bright'))).toBeGreaterThanOrEqual(4.5)
+    expect(
+      contrast(token('--cta-text'), token('--accent-bright')),
+    ).toBeLessThan(4.5)
   })
 })

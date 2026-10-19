@@ -7,6 +7,7 @@
  */
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { ReactNode } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
@@ -15,7 +16,9 @@ import { setMediaQuery } from '../test/setup'
 import { WelcomePage } from './WelcomePage'
 
 vi.mock('@samasante/liquid-glass', () => ({
-  Glass: () => <div data-testid="mock-glass" />,
+  Glass: ({ children }: { children?: ReactNode }) => (
+    <div data-testid="mock-glass">{children}</div>
+  ),
 }))
 
 const REDUCED_QUERY = '(prefers-reduced-motion: reduce)'

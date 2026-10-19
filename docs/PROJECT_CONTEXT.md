@@ -82,6 +82,32 @@ before or alongside professional care. Grounded in a verified 147-source researc
     on the separate dev lane (ports 8123/5373; composed lane 8124/8125; port 8000 is
     never touched).
 
+## Standing decisions (Stage 6f completion, 2026-10-19 — Golden Glass restyle)
+
+15. **Golden Glass is the styling direction (spec's "D10").** The web app's visual
+    layer follows `.plans/stage-6f-golden-glass-spec.md` / `docs/webapp-design-golden-glass.md`
+    and supersedes `docs/webapp-design.md` **for styling only** (safety/honesty sections
+    there stay authoritative). Decisions:
+    - **Light-only.** Cream sky (`--bg #FFF4E4`), terracotta accent (`#A8501C`), warm
+      brown ink (`#34261A`); no dark block in `tokens.css` — a dark theme would be a
+      new stage, not a token swap.
+    - **3-lens budget.** Exactly three `@samasante/liquid-glass` sites (nav pill,
+      GlassOrb, chat composer), all via the shared `GlassSurface` primitive in
+      **material mode** — `filterResolution` is never passed (it disqualifies material
+      mode and warps children). Optics pinned per variant (nav/orb/composer) and
+      asserted by test.
+    - **`mapSize: 256` and `frost: 0`** at all three sites; per-site strength/depth/
+      curvature/dispersion/bend/sheen/glow/specular/brightness per the spec §4 table.
+    - **CTA gradient** `#A8501C → #8A3F14` with `--cta-text #FFF9F0` (5.24/7.16) and
+      `--cta-hover #7A3611`; used for primary actions only.
+    - **Reduced effects = no lens.** The lib never mounts under reduced effects; each
+      site renders an opaque warm static fallback keeping its testids
+      (`glass-orb`/`data-fallback="frosted"`, `data-fallback="static"`,
+      `composer-glass`). Landscape stays static; only the haze drift class is dropped.
+    - **Added token `--ink-on #FFF6EA`** (text on ink pills) beyond the spec's list —
+      contrast-paired with `--ink` in `contrast.test.ts`. `--accent-bright #E8853C` is
+      decorative-only (never a text background).
+
 ## How we work (established conventions)
 
 - **Stack:** Python ≥ 3.11 (FastAPI planned for the API), TypeScript/React planned for
@@ -130,8 +156,10 @@ before or alongside professional care. Grounded in a verified 147-source researc
   no-key dev mode serves scripted routes with generated turns 503-ing cleanly).
   README updated: status paragraph, roadmap (0–5 Complete), coverage gate text (100%),
   architecture status line, layout tree (measurement/api/cli added), local-run section.
-- **Stage 6 — Complete (sub-staged 6a–6e), built strictly per `docs/webapp-design.md`:**
-  web application in `web/` (Vite + React 19 + strict TS + Tailwind 4, sage tokens) with
+- **Stage 6 — Complete (sub-staged 6a–6f), built strictly per `docs/webapp-design.md`
+  (6f styling per `docs/webapp-design-golden-glass.md`):**
+  web application in `web/` (Vite + React 19 + strict TS + Tailwind 4, Golden Glass
+  tokens per 6f — originally sage) with
   five routes — onboarding, chat, exercise library, check-in dashboard, settings — plus
   typed API client, honest error/503 states, crisis banner + resources, device-local
   journal, reduced-effects engine, vendored Canvas UI (with NOTICE), and a frontend
@@ -144,11 +172,17 @@ before or alongside professional care. Grounded in a verified 147-source researc
   (component fix: derived `--accent-ink` token for accent text on the pinned
   `--accent-soft` tint), and a mock-LLM generated-turn E2E against a real composed
   service (`web/dist` + `--static` + stdlib mock provider) proving a generated reply
-  reaches the UI without any real credential. README roadmap flipped to Complete with
-  evidence; CHANGELOG updated.
-- **Test suite:** backend 689 tests at 100% statement and branch coverage; web 343
-  frontend tests at 98.99% statements / 94.74% branches; 31 Playwright E2E specs (21
-  keyless safety specs unchanged + 5 axe + 3 generated-turn + 2 PWA offline); CI green
+  reaches the UI without any real credential. Sub-stage 6f restyled the whole web app
+  to **Golden Glass** (warm cream/terracotta tokens, static landscape background,
+  floating glass nav pill + orb + composer lenses via one shared `GlassSurface`
+  primitive, all with full reduced-effects static fallbacks; serif display headings;
+  CTA gradients) with zero behavior change — safety surfaces, verbatim copy, testids,
+  and roles untouched (D15); PWA manifest/icons/theme-color retinted to terracotta.
+  README roadmap flipped to Complete with evidence; CHANGELOG updated.
+- **Test suite:** backend 689 tests at 100% statement and branch coverage; web 373
+  frontend tests at 99.09% statements / 94.96% branches; 31 Playwright E2E specs (21
+  keyless safety specs unchanged + 5 axe + 3 generated-turn + 2 PWA offline), axe zero
+  violations on all five routes; CI green
   (ruff, mypy strict, Python 3.12 + 3.14 matrix, gitleaks).
 - **Next: Stage 7 — evaluation harness** (adverse-event logging, feasibility-pilot
   instrumentation and reporting, per the README roadmap table). Stage 8 — Android client

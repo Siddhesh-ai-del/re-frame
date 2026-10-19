@@ -8,6 +8,7 @@
  */
 import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -22,11 +23,14 @@ import { ToastProvider } from '../components/toast/ToastProvider'
 import { ChatPage } from './ChatPage'
 import type { components } from '../api/schema.d'
 
-// The empty-state GlassOrb mounts the glass lib when motion is allowed;
-// jsdom cannot run it, so stand in for the lens here (GlassOrb's own tests
-// cover the fallback decision).
+// The empty-state GlassOrb and the composer lens both mount the glass lib
+// when motion is allowed; jsdom cannot run it, so stand in for the lens here
+// — children pass through because the composer textarea lives inside the lens
+// (GlassOrb's own tests cover the fallback decision).
 vi.mock('@samasante/liquid-glass', () => ({
-  Glass: () => <div data-testid="mock-glass" />,
+  Glass: ({ children }: { children?: ReactNode }) => (
+    <div data-testid="mock-glass">{children}</div>
+  ),
 }))
 
 type ChatResponse = components['schemas']['ChatResponse']

@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RE:FRAME">
-  <!-- Stage 6e PWA icon (sage theme, D6): a frame being re-drawn around a
+  <!-- Stage 6f PWA icon (Golden Glass): a frame being re-drawn around a
        shifted frame — the product's name as geometry. -->
-  <rect width="512" height="512" rx="96" fill="#4A7C59" />
-  <g fill="none" stroke="#FAFAF7" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+  <rect width="512" height="512" rx="96" fill="#A8501C" />
+  <g fill="none" stroke="#FFF4E4" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
     <path d="M150 130 H96 a14 14 0 0 0 -14 14 v96" />
     <path d="M150 382 H96 a14 14 0 0 1 -14 -14 v-96" />
     <rect x="178" y="178" width="156" height="156" rx="28" />

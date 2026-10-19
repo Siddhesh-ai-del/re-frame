@@ -50,8 +50,8 @@ test.describe('PWA surface (static assets)', () => {
     const parsed = (await manifest.json()) as Record<string, unknown>
     expect(parsed.name).toBe('RE:FRAME')
     expect(parsed.short_name).toBe('RE:FRAME')
-    expect(parsed.theme_color).toBe('#4A7C59')
-    expect(parsed.background_color).toBe('#FAFAF7')
+    expect(parsed.theme_color).toBe('#A8501C')
+    expect(parsed.background_color).toBe('#FFF4E4')
     expect(parsed.start_url).toBe('/')
 
     // The offline page exists and carries the standing crisis resources
@@ -77,7 +77,7 @@ test.describe('PWA surface (static assets)', () => {
     const indexHtml = await index.text()
     expect(indexHtml).toContain('rel="manifest"')
     expect(indexHtml).toContain('theme-color')
-    expect(indexHtml).toContain('#4A7C59')
+    expect(indexHtml).toContain('#A8501C')
   })
 })
 

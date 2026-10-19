@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RE:FRAME">
   <!-- Maskable variant: full-bleed background (no rounded corners — the OS
        mask clips it) and the glyph kept inside the 80% safe circle. -->
-  <rect width="512" height="512" fill="#4A7C59" />
+  <rect width="512" height="512" fill="#A8501C" />
   <g
     fill="none"
-    stroke="#FAFAF7"
+    stroke="#FFF4E4"
     stroke-width="24"
     stroke-linecap="round"
     stroke-linejoin="round"

@@ -5,8 +5,18 @@
  */
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { Composer } from './Composer'
+
+// The composer row now sits inside the shared GlassSurface lens (stage 6f);
+// jsdom has no canvas/WebGL, so the lib is mocked and the tests below stay
+// focused on the form contract.
+vi.mock('@samasante/liquid-glass', () => ({
+  Glass: ({ children }: { children?: ReactNode }) => (
+    <div data-testid="mock-glass">{children}</div>
+  ),
+}))
 
 describe('Composer', () => {
   it('renders a labelled textarea and a Send button', () => {

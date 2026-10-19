@@ -1,39 +1,50 @@
 /*
- * RE:FRAME design tokens — calm minimal / sage (docs/webapp-design.md §2).
- * All values are contrast-verified (WCAG 2.2 AA) pairs; the palette is a
- * contract: tests assert these exact values, so change them only alongside
- * the design doc.
+ * RE:FRAME design tokens — Golden Glass (stage 6f).
+ * Canonical direction: .plans/stage-6f-golden-glass-spec.md §1, itself
+ * derived from the approved mockups (.plans/style-mocks/glass-mockups).
+ * Replaces the calm-minimal sage palette (docs/webapp-design.md §2, now
+ * superseded for styling; its safety sections remain authoritative).
+ *
+ * All contrast-carrying values are pre-verified (WCAG 2.2 AA) and pinned by
+ * src/styles/contrast.test.ts + src/styles/tokens.test.ts — change a value
+ * only alongside those tests. Never hardcode a color outside this file; use
+ * a var() token so contrast stays centrally verifiable. Light-only palette.
  */
 
 :root {
-  /* Palette */
-  --bg: #FAFAF7;
-  --surface: #FFFFFF;
-  --surface-sunk: #F1F2ED;
-  --border: #E3E5E0;
-  --ink: #1F2421;
-  --ink-muted: #59615B;
-  --accent: #4A7C59;
-  --accent-soft: #E8F0EA;
-  /* Derived text token (stage 6e a11y): accent TEXT over --accent-soft
-     selected/tinted states. The doc-pinned pair (#4A7C59 on #E8F0EA) is
-     4.19:1 — below AA for normal text — so this darker sage (5.37:1 over
-     the tint) carries it. Contrast-pinned by src/styles/contrast.test.ts. */
-  --accent-ink: #3E6A4C;
-  --warning: #7A5B14;
-  --warning-soft: #F6EFDC;
-  --crisis: #A33A32;
-  --crisis-soft: #F8EAE8;
+  /* ── Palette ──────────────────────────────────────────────────────── */
+  --bg: #FFF4E4; /* warm sky cream            13.43:1 for --ink */
+  --surface: #FFFCF7; /* warm panel white */
+  --surface-sunk: #F5E7D0; /* sunken warm sand */
+  --border: #EAD9C2; /* warm hairline (UI border only, no text pair) */
+  --ink: #34261A; /* warm brown ink */
+  --ink-muted: #6E5847; /* muted brown              6.13 bg / 5.47 sunk */
+  --accent: #A8501C; /* terracotta                5.04 bg / 5.36 surface */
+  --accent-soft: #FAE5CD; /* peach tint */
+  --accent-ink: #8A3F14; /* deep terracotta text     6.12 accent-soft */
+  --accent-bright: #E8853C; /* decorative ONLY — never a text background */
+  --ink-on: #FFF6EA; /* text on ink pills (active nav, chips) */
+
+  /* CTA gradient stops (light-on-gradient verified: 5.24 / 7.16) */
+  --cta-start: #A8501C;
+  --cta-end: #8A3F14;
+  --cta-text: #FFF9F0;
+  --cta-hover: #7A3611; /* 8.49 on cta-text */
+
+  --warning: #6E5210; /* 6.16 on warning-soft */
+  --warning-soft: #F6EBD2;
+  --crisis: #8F2F27; /* 6.74 on crisis-soft */
+  --crisis-soft: #F8E7E4;
 
   /* Motion: every transition stays at or under 160ms (design policy). */
   --motion-duration: 160ms;
   --motion-easing: ease;
 
-  /* Shape */
-  --radius-card: 14px;
-  --radius-input: 10px;
+  /* Shape (warm, pill-heavy) */
+  --radius-card: 26px;
+  --radius-input: 18px;
   --radius-pill: 999px;
-  --shadow-soft: 0 1px 3px rgb(31 36 33 / 0.08);
+  --shadow-soft: 0 14px 40px rgba(150, 100, 50, 0.15);
 
   /* Space: 4px base scale */
   --space-1: 4px;
@@ -47,16 +58,48 @@
   /* Layout */
   --width-reading: 720px;
   --width-page: 1080px;
+
+  /* Display type (h1 / h2.section — bold 700, tight leading) */
+  --font-display: ui-serif, Georgia, 'Iowan Old Style', serif;
+
+  /* ── Landscape tokens (decorative backdrop — NO text pairs) ───────── */
+  --sky-top: #FFF4E4;
+  --sky-mid: #FFE8CC;
+  --sky-low: #F9E0C6;
+  --sky-base: #F6DEC5; /* gradient terminus */
+  --hill-1: #CBD9BA;
+  --hill-2: #AFC7A4;
+  --hill-3: #8FAD92;
+  --sun-core: #FFFAF0;
+  --sun-edge: #FFC988;
+  --sun-glow: rgba(255, 214, 150, 0.85);
+  --contour: rgba(150, 105, 60, 0.4);
+  --contour-2: rgba(196, 103, 43, 0.4);
+
+  /* ── Glass optics surfaces (3-lens budget — see GlassSurface) ─────── */
+  --panel: rgba(255, 251, 243, 0.86);
+  --glass-tint: rgba(255, 252, 246, 0.42);
+  --glass-edge: rgba(255, 255, 255, 0.72);
 }
 
 /* In-app reduced effects (Settings toggle + OS preference) gates animation;
- * the static equivalents render whenever this is set. */
+ * the static equivalents render whenever this is set, and the lens never
+ * mounts (GlassSurface / GlassOrb contract). */
 :root[data-reduced-effects='true'] {
   --motion-duration: 0ms;
 }
 
 body {
-  background: var(--bg);
+  /* Sky gradient: top cream → peach → warm sand. */
+  background:
+    linear-gradient(
+      180deg,
+      var(--sky-top) 0%,
+      var(--sky-mid) 26%,
+      var(--sky-low) 58%,
+      var(--sky-base) 100%
+    )
+    fixed;
   color: var(--ink);
   font-family:
     system-ui,

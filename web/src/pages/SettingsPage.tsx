@@ -92,7 +92,8 @@ function downloadBlob(contents: string, filename: string, type: string): void {
   URL.revokeObjectURL(url)
 }
 
-const SECTION_CLASS = 'flex flex-col gap-3'
+const SECTION_CLASS =
+  'panel flex flex-col gap-3 rounded-[var(--radius-card)] p-5'
 
 export function SettingsPage() {
   const { preference, reducedEffects, setPreference } = useReducedEffects()
@@ -190,26 +191,37 @@ export function SettingsPage() {
       aria-label="Settings"
       className="mx-auto flex w-full max-w-page flex-col gap-8 px-6 py-8"
     >
-      <h1 className="text-3xl font-medium text-ink">Settings</h1>
+      <h1 className="font-display text-3xl font-bold tracking-[-0.01em] text-ink">
+        Settings
+      </h1>
 
       <fieldset className={SECTION_CLASS}>
-        <legend className="text-xl font-medium text-ink">Reduce effects</legend>
-        {EFFECT_OPTIONS.map((option) => (
-          <label key={option.value} className="flex items-center gap-2 text-ink">
-            <input
-              type="radio"
-              name="reduce-effects"
-              value={option.value}
-              checked={preference === option.value}
-              onChange={() => setPreference(option.value)}
-            />
-            {option.label}
-          </label>
-        ))}
+        <legend className="px-1 font-display text-xl font-bold text-ink">
+          Reduce effects
+        </legend>
+        {/* Segmented pill track: the REAL radios stay in the DOM (keyboard +
+            Playwright) — only the paint changes (spec §5). */}
+        <div className="flex flex-wrap gap-1 self-start rounded-pill border border-border bg-white/60 p-1">
+          {EFFECT_OPTIONS.map((option) => (
+            <label
+              key={option.value}
+              className="flex cursor-pointer items-center gap-2 rounded-pill px-3 py-1.5 text-sm text-ink transition-colors duration-150 has-[:checked]:bg-ink has-[:checked]:font-semibold has-[:checked]:text-ink-on"
+            >
+              <input
+                type="radio"
+                name="reduce-effects"
+                value={option.value}
+                checked={preference === option.value}
+                onChange={() => setPreference(option.value)}
+              />
+              {option.label}
+            </label>
+          ))}
+        </div>
       </fieldset>
 
       <section aria-label="Ambient frost/clouds" className={SECTION_CLASS}>
-        <h2 className="text-xl font-medium text-ink">Ambient frost/clouds</h2>
+        <h2 className="font-display text-xl font-bold tracking-[-0.01em] text-ink">Ambient frost/clouds</h2>
         <label className="flex items-center gap-2 text-ink">
           <input
             type="checkbox"
@@ -225,7 +237,7 @@ export function SettingsPage() {
       </section>
 
       <section aria-label="Journal" className={SECTION_CLASS}>
-        <h2 className="text-xl font-medium text-ink">Journal</h2>
+        <h2 className="font-display text-xl font-bold tracking-[-0.01em] text-ink">Journal</h2>
         <p className="text-sm text-ink-muted">
           Your journal is stored only on this device. Nothing is sent anywhere.
         </p>
@@ -240,7 +252,7 @@ export function SettingsPage() {
           <button
             type="button"
             onClick={() => exportJournal(entries)}
-            className="rounded-pill bg-accent px-4 py-2 text-sm text-bg transition-colors duration-150"
+            className="btn-cta rounded-pill px-4 py-2 text-sm font-semibold transition-colors duration-150"
           >
             Export journal
           </button>
@@ -250,7 +262,7 @@ export function SettingsPage() {
               <button
                 type="button"
                 onClick={() => setConfirmingJournalDelete(false)}
-                className="rounded-pill border border-line px-4 py-2 text-sm text-ink transition-colors duration-150"
+                className="rounded-pill border border-border bg-surface px-4 py-2 text-sm text-ink transition-colors duration-150"
               >
                 Cancel
               </button>
@@ -269,7 +281,7 @@ export function SettingsPage() {
                 setJournalCleared(false)
                 setConfirmingJournalDelete(true)
               }}
-              className="rounded-pill border border-line px-4 py-2 text-sm text-ink transition-colors duration-150"
+              className="rounded-pill border border-border bg-surface px-4 py-2 text-sm text-ink transition-colors duration-150"
             >
               Delete all entries
             </button>
@@ -283,7 +295,7 @@ export function SettingsPage() {
       </section>
 
       <section aria-label="Check-in data" className={SECTION_CLASS}>
-        <h2 className="text-xl font-medium text-ink">Check-in data</h2>
+        <h2 className="font-display text-xl font-bold tracking-[-0.01em] text-ink">Check-in data</h2>
         <p className="text-sm text-ink-muted">
           Exports build a file on this device from your own check-in history.
         </p>
@@ -291,7 +303,7 @@ export function SettingsPage() {
           <button
             type="button"
             onClick={() => void exportCheckins()}
-            className="rounded-pill bg-accent px-4 py-2 text-sm text-bg transition-colors duration-150"
+            className="btn-cta rounded-pill px-4 py-2 text-sm font-semibold transition-colors duration-150"
           >
             Export my check-ins
           </button>
@@ -301,7 +313,7 @@ export function SettingsPage() {
               <button
                 type="button"
                 onClick={() => setConfirmingPurge(false)}
-                className="rounded-pill border border-line px-4 py-2 text-sm text-ink transition-colors duration-150"
+                className="rounded-pill border border-border bg-surface px-4 py-2 text-sm text-ink transition-colors duration-150"
               >
                 Cancel
               </button>
@@ -321,7 +333,7 @@ export function SettingsPage() {
                 setPurgeFailed(false)
                 setConfirmingPurge(true)
               }}
-              className="rounded-pill border border-line px-4 py-2 text-sm text-ink transition-colors duration-150"
+              className="rounded-pill border border-border bg-surface px-4 py-2 text-sm text-ink transition-colors duration-150"
             >
               Delete all check-ins
             </button>
@@ -345,7 +357,7 @@ export function SettingsPage() {
       </section>
 
       <section aria-label="About" className={SECTION_CLASS}>
-        <h2 className="text-xl font-medium text-ink">About</h2>
+        <h2 className="font-display text-xl font-bold tracking-[-0.01em] text-ink">About</h2>
         {version !== null ? (
           <p className="text-ink">Version {version} — from the local service</p>
         ) : healthFailed ? (

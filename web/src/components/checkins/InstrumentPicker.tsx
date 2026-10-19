@@ -67,14 +67,20 @@ export function InstrumentPicker({
             aria-pressed={selected}
             onClick={() => onSelect(instrument.id)}
             className={[
-              'flex flex-col items-start gap-0.5 rounded-[var(--radius-card)] border px-3 py-2 text-left transition-colors duration-150',
+              'flex flex-col items-start gap-0.5 rounded-pill border px-4 py-2 text-left transition-colors duration-150',
               selected
-                ? 'border-accent bg-accent-soft text-accent-ink'
-                : 'border-border bg-surface text-ink hover:bg-surface-sunk',
+                ? 'border-transparent bg-ink text-ink-on shadow-[var(--shadow-soft)]'
+                : 'border-border bg-surface text-ink hover:bg-white/70',
             ].join(' ')}
           >
             <span className="text-sm font-medium">{instrument.title}</span>
-            <span className="text-xs text-ink-muted">{instrument.recall_period}</span>
+            <span
+              className={
+                selected ? 'text-xs text-ink-on' : 'text-xs text-ink-muted'
+              }
+            >
+              {instrument.recall_period}
+            </span>
           </button>
         )
       })}

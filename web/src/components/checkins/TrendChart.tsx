@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { components } from '../../api/schema.d'
 
 /**
@@ -37,6 +37,9 @@ export function TrendChart({
   onRetry,
 }: TrendChartProps) {
   const [focusedPoint, setFocusedPoint] = useState<number | null>(null)
+  // Accent-bright → accent sweep on line + dots (spec §5 "trend bars in
+  // accent-bright gradient"); still ink/accent family — never risk colors.
+  const gradientId = useId()
 
   if (loading) {
     return <p className="text-sm text-ink-muted">Loading your history…</p>
@@ -89,10 +92,16 @@ export function TrendChart({
         aria-label={`Check-in totals over time, from ${entries[0]!.date} to ${entries[entries.length - 1]!.date}`}
         className="w-full"
       >
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" style={{ stopColor: 'var(--accent-bright)' }} />
+            <stop offset="100%" style={{ stopColor: 'var(--accent)' }} />
+          </linearGradient>
+        </defs>
         <polyline
           points={polyline}
           fill="none"
-          className="stroke-accent"
+          stroke={`url(#${gradientId})`}
           strokeWidth={2}
         />
         {points.map((point, index) => (
@@ -108,7 +117,7 @@ export function TrendChart({
             aria-label={`${point.entry.date}: ${point.entry.total}${point.entry.severity_label !== null ? ` (${point.entry.severity_label})` : ''}`}
             onFocus={() => setFocusedPoint(index)}
             onBlur={() => setFocusedPoint(null)}
-            className="fill-accent"
+            fill={`url(#${gradientId})`}
           />
         ))}
       </svg>

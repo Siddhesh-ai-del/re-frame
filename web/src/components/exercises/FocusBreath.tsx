@@ -86,8 +86,10 @@ export function FocusBreath() {
   }
 
   return (
-    <section aria-label="Focus breath" className="flex flex-col gap-3">
-      <h2 className="text-xl font-medium text-ink">Focus breath</h2>
+    <section aria-label="Focus breath" className="panel flex flex-col gap-3 rounded-[var(--radius-card)] p-5">
+      <h2 className="font-display text-xl font-bold tracking-[-0.01em] text-ink">
+        Focus breath
+      </h2>
       <p className="text-ink-muted">A minute of paced breathing. {CUE_TEXT}</p>
       <div className="flex items-center gap-4">
         {reducedEffects ? (
@@ -99,13 +101,13 @@ export function FocusBreath() {
             data-testid="breath-circle"
             data-phase={status === 'idle' ? 'idle' : phase.name}
             aria-hidden="true"
-            className={`h-24 w-24 rounded-full border border-border bg-accent-soft transition-transform duration-150 ease-out ${scaleClass}`}
+            className={`breath-ring h-24 w-24 rounded-full transition-transform duration-150 ease-out ${scaleClass}`}
           />
         )}
         <p
           data-testid="breath-countdown"
           aria-live="polite"
-          className="tabular-nums text-2xl text-ink"
+          className="font-display tabular-nums text-2xl font-bold text-ink"
         >
           {formatClock(remaining)}
         </p>
@@ -116,7 +118,7 @@ export function FocusBreath() {
           <button
             type="button"
             onClick={start}
-            className="rounded-pill bg-accent px-4 py-2 text-sm text-bg transition-colors duration-150"
+            className="btn-cta rounded-pill px-4 py-2 text-sm font-semibold transition-colors duration-150"
           >
             Start
           </button>
@@ -144,7 +146,7 @@ export function FocusBreath() {
             <button
               type="button"
               onClick={start}
-              className="rounded-pill bg-accent px-4 py-2 text-sm text-bg transition-colors duration-150"
+              className="btn-cta rounded-pill px-4 py-2 text-sm font-semibold transition-colors duration-150"
             >
               Resume
             </button>

@@ -1,11 +1,12 @@
 /**
- * Chat message bubble (stage 6b, adapted from opensourceui chat bubbles, MIT).
+ * Chat message bubble (stage 6b, adapted from opensourceui chat bubbles, MIT;
+ * restyled for Golden Glass — spec §5).
  *
- * Two variants: `user` (accent-tinted, right) and `assistant` (surface,
- * left). The assistant variant goes `muted` on the human_review and
- * filtered_fallback routes so boundary copy reads visibly softer. Internal
- * fields (`violations`) are never rendered — the component only accepts the
- * text it should show.
+ * Two variants: `user` (terracotta CTA gradient + --cta-text, right) and
+ * `assistant` (warm panel, left). The assistant variant goes `muted` on the
+ * human_review and filtered_fallback routes so boundary copy reads visibly
+ * softer. Internal fields (`violations`) are never rendered — the component
+ * only accepts the text it should show.
  */
 
 export type MessageRole = 'user' | 'assistant'
@@ -25,10 +26,10 @@ export function MessageBubble({ role, text, route }: MessageBubbleProps) {
     return (
       <li
         data-variant="user"
-        className="flex self-end rounded-[var(--radius-card)] bg-accent-soft"
+        className="bubble-user flex self-end rounded-[var(--radius-card)] rounded-br-[7px] shadow-[0_8px_22px_rgba(168,80,28,0.3)]"
         aria-label="You"
       >
-        <div className="max-w-[85%] px-4 py-3 text-ink">{text}</div>
+        <div className="max-w-[85%] px-4 py-3">{text}</div>
       </li>
     )
   }
@@ -38,7 +39,7 @@ export function MessageBubble({ role, text, route }: MessageBubbleProps) {
     <li
       data-variant={muted ? 'muted' : 'assistant'}
       className={[
-        'flex self-start rounded-[var(--radius-card)] border border-border bg-surface',
+        'flex self-start rounded-[var(--radius-card)] rounded-bl-[7px] border border-border bg-surface',
         muted ? 'text-ink-muted' : '',
       ].join(' ')}
       aria-label="RE:FRAME"

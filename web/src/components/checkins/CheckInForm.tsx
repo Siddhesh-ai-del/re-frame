@@ -124,16 +124,16 @@ export function CheckInForm({ instrument, onDone }: CheckInFormProps) {
       {instrument.items.map((item) => (
         <fieldset
           key={item.index}
-          className="rounded-[var(--radius-card)] border border-border bg-surface p-3"
+          className="panel rounded-[var(--radius-card)] p-4"
         >
-          <legend className="px-1 text-sm font-medium text-ink">
+          <legend className="px-1 text-sm font-semibold text-ink">
             {item.prompt}
           </legend>
-          <div className="mt-2 flex flex-wrap gap-3">
+          <div className="mt-2 flex flex-wrap gap-2">
             {instrument.answer_options.map((option) => (
               <label
                 key={option.value}
-                className="flex items-center gap-1.5 text-sm text-ink"
+                className="flex cursor-pointer items-center gap-2 rounded-pill border border-border bg-white/60 px-3 py-1.5 text-sm text-ink transition-colors duration-150 has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:font-semibold"
               >
                 <input
                   id={`checkin-item-${item.index}-opt-${option.value}`}
@@ -161,7 +161,7 @@ export function CheckInForm({ instrument, onDone }: CheckInFormProps) {
       <button
         type="submit"
         disabled={!complete || submitting}
-        className="self-start rounded-[var(--radius-input)] border border-accent bg-accent px-4 py-2 text-sm text-white transition-colors duration-150 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="btn-cta self-start rounded-pill px-5 py-2.5 text-sm font-semibold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {submitting ? 'Sending your check-in…' : 'Save check-in'}
       </button>

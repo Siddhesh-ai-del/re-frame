@@ -20,9 +20,11 @@ export function ResourcesPanel({ resources }: ResourcesPanelProps) {
   return (
     <section
       aria-label="Crisis support resources"
-      className="rounded-[var(--radius-card)] border border-border bg-surface p-4"
+      className="panel rounded-[var(--radius-card)] p-4"
     >
-      <h2 className="text-sm font-medium text-ink">Support available now</h2>
+      <h2 className="text-xs font-extrabold uppercase tracking-[0.14em] text-accent-ink">
+        Support available now
+      </h2>
       <ul className="mt-2 flex flex-col gap-1 text-sm">
         {resources.map((resource) => (
           <li key={resource.name} className="text-ink">

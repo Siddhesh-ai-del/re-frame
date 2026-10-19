@@ -20,11 +20,14 @@ describe('CrisisBanner', () => {
     )
   })
 
-  it('is sticky and carries the crisis-soft background', () => {
+  it('is sticky and carries the warm amber-warn background (stage 6f)', () => {
     const { container } = render(<CrisisBanner />)
     const banner = container.querySelector('[data-testid="crisis-banner"]')
     expect(banner!.className).toContain('sticky')
-    expect(banner!.className).toContain('bg-crisis-soft')
+    // Spec §5: the escalation banner restyles to amber-warn (same copy,
+    // same role) — `bg-warning-soft` / `text-warning`, not crisis-red.
+    expect(banner!.className).toContain('bg-warning-soft')
+    expect(banner!.className).toContain('text-warning')
   })
 
   it('offers no close control (fail-closed, not dismissible)', () => {

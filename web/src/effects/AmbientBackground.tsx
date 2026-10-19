@@ -1,17 +1,71 @@
 import { useOptionalReducedEffects } from './EffectsContext'
 
 /**
- * AmbientBackground (stage 6d): the CSS-only aurora/linen layer, mounted once
- * behind all content. adapted from opensourceui (MIT) ambient-gradient
- * techniques — reshaped to RE:FRAME tokens. Contract: aria-hidden,
- * pointer-events-none, painted BELOW content (DOM order before the shell +
- * non-positive z-index), and completely static when reduced effects are
- * resolved (no animation classes in the DOM at all — CSS cannot animate what
- * isn't declared).
+ * AmbientBackground (stage 6f — Golden Glass): the static layered landscape
+ * behind all content — sky gradient is on <body>, and this fixed layer adds
+ * sun, two blurred haze blobs, the two topographic contour sets (the crisp
+ * vectors the liquid-glass lenses visibly bend), and three hills
+ * (spec §3; generators copied from the approved mockup chrome).
+ *
+ * Contract (unchanged from stage 6d): aria-hidden, pointer-events-none,
+ * painted BELOW content (fixed, non-positive z-index), testid unchanged.
+ * The drift animation lives ONLY on the haze wrapper, which is removed from
+ * the DOM under reduced effects — CSS cannot animate what isn't declared, so
+ * the landscape renders completely static (spec §0.3).
  *
  * Uses the optional context hook so a decorative layer that mounts outside
- * the provider still renders (it just assumes effects are allowed).
+ * the provider still renders (it resolves the OS signal itself).
  */
+
+/** Sparse contour set — 10 lines (mockup `Contours`). */
+function Contours() {
+  const lines = []
+  for (let i = 0; i < 10; i++) {
+    const y = 90 + i * 170
+    const a = 40 + (i % 4) * 22
+    lines.push(
+      <path
+        key={i}
+        d={`M -40 ${y} C 260 ${y - a}, 540 ${y + a}, 840 ${y - a * 0.6} S 1420 ${y + a * 0.7}, 1680 ${y - a * 0.3}`}
+      />,
+    )
+  }
+  return (
+    <svg
+      className="contours"
+      viewBox="0 0 1600 1800"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      {lines}
+    </svg>
+  )
+}
+
+/** Tighter terracotta set — 22 lines crossing nav + composer bands. */
+function Contours2() {
+  const lines = []
+  for (let i = 0; i < 22; i++) {
+    const y = 30 + i * 82
+    const a = 26 + (i % 3) * 18
+    lines.push(
+      <path
+        key={i}
+        d={`M -40 ${y} C 320 ${y + a}, 620 ${y - a}, 900 ${y + a * 0.55} S 1380 ${y - a * 0.65}, 1680 ${y + a * 0.3}`}
+      />,
+    )
+  }
+  return (
+    <svg
+      className="contours2"
+      viewBox="0 0 1600 1800"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      {lines}
+    </svg>
+  )
+}
 
 export function AmbientBackground() {
   const effects = useOptionalReducedEffects()
@@ -21,16 +75,27 @@ export function AmbientBackground() {
     <div
       data-testid="ambient-background"
       aria-hidden="true"
-      className={[
-        'pointer-events-none fixed inset-0 -z-10 overflow-hidden',
-        reducedEffects ? '' : 'animate-aurora',
-      ]
-        .filter(Boolean)
-        .join(' ')}
+      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
     >
-      <div className="absolute inset-0 bg-[radial-gradient(60%_50%_at_20%_20%,var(--accent-soft)_0%,transparent_60%)] opacity-60" />
-      <div className="absolute inset-0 bg-[radial-gradient(50%_40%_at_80%_30%,var(--surface-sunk)_0%,transparent_55%)] opacity-50" />
-      <div className="absolute inset-0 bg-[linear-gradient(160deg,transparent_0%,var(--accent-soft)_100%)] opacity-30" />
+      <div
+        className={[
+          'haze-layer',
+          reducedEffects ? '' : 'animate-haze',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        <i className="haze-a" />
+        <i className="haze-b" />
+      </div>
+      <div className="ambient-sun" />
+      <Contours />
+      <Contours2 />
+      <div className="hills">
+        <div className="ambient-hill hill-1" />
+        <div className="ambient-hill hill-2" />
+        <div className="ambient-hill hill-3" />
+      </div>
     </div>
   )
 }

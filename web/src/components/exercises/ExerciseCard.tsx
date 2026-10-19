@@ -19,9 +19,15 @@ export function ExerciseCard({ exercise }: { exercise: ExerciseOut }) {
   return (
     <article
       data-testid="exercise-card"
-      className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-border bg-surface p-4"
+      className="panel flex flex-col gap-2 rounded-[var(--radius-card)] p-5"
     >
-      <h3 className="text-lg font-medium text-ink">{exercise.title}</h3>
+      {/* Presentational category meta (existing field — no duration data). */}
+      <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-accent-ink">
+        {exercise.category.replace(/_/g, ' ')}
+      </p>
+      <h3 className="font-display text-lg font-bold text-ink">
+        {exercise.title}
+      </h3>
       <p className="text-ink-muted">{exercise.summary}</p>
       {/* Honest label only — the tier is a grading, not a risk signal. */}
       <p className="text-sm text-ink-muted">Evidence tier: {exercise.tier}</p>

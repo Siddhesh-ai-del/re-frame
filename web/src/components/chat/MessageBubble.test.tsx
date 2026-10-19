@@ -13,14 +13,16 @@ describe('MessageBubble', () => {
     expect(screen.getByText('I feel overwhelmed today')).toBeInTheDocument()
   })
 
-  it('marks the user variant on the right with accent tint', () => {
+  it('marks the user variant on the right with the terracotta CTA gradient', () => {
     const { container } = render(
       <MessageBubble role="user" text="hello" />,
     )
     const bubble = container.querySelector('[data-variant="user"]')
     expect(bubble).not.toBeNull()
     expect(bubble!.className).toContain('self-end')
-    expect(bubble!.className).toContain('bg-accent-soft')
+    // Stage 6f: light text over the axe-verified cta gradient stops.
+    expect(bubble!.className).toContain('bubble-user')
+    expect(bubble!.className).not.toContain('bg-accent-soft')
   })
 
   it('marks the assistant variant on the left with surface background', () => {

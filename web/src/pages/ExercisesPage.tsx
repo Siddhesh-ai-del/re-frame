@@ -80,7 +80,9 @@ export function ExercisesPage() {
       aria-label="Exercises"
       className="mx-auto flex w-full max-w-page flex-col gap-8 px-6 py-8"
     >
-      <h1 className="text-3xl font-medium text-ink">Exercises</h1>
+      <h1 className="font-display text-3xl font-bold tracking-[-0.01em] text-ink">
+        Exercises
+      </h1>
       {failed ? (
         <div className="flex flex-col items-start gap-3">
           <p role="status" className="text-ink">
@@ -89,7 +91,7 @@ export function ExercisesPage() {
           <button
             type="button"
             onClick={retry}
-            className="rounded-pill bg-accent px-4 py-2 text-sm text-bg transition-colors duration-150"
+            className="btn-cta rounded-pill px-4 py-2 text-sm font-semibold transition-colors duration-150"
           >
             Try again
           </button>
@@ -106,7 +108,11 @@ export function ExercisesPage() {
             aria-label={readableCategory(group.category)}
             className="flex flex-col gap-3"
           >
-            <h2 className="text-xl font-medium text-ink">
+            <h2 className="flex items-center gap-2.5 font-display text-xl font-bold tracking-[-0.01em] text-ink">
+              <span
+                aria-hidden="true"
+                className="h-2.5 w-2.5 flex-none rounded-full bg-accent shadow-[0_0_0_3px_rgba(255,255,255,0.7)]"
+              />
               {readableCategory(group.category)}
             </h2>
             <div className="grid gap-3 md:grid-cols-2">

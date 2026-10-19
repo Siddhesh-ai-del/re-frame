@@ -1,6 +1,14 @@
 # RE:FRAME Web App — Stage 6 Design Document
 
-**Status:** approved design inputs (style, palette, component picks, license policy decided
+**Status: SUPERSEDED FOR STYLING (Stage 6f, 2026-10-19).** The visual layer
+(tokens, palette, shape, ambient background, component chrome) now follows the
+Golden Glass direction in `docs/webapp-design-golden-glass.md`; the sage
+palette and styling rules below are historical. **Everything in this document
+that is not styling remains authoritative** — the license ledger (§1), the
+non-negotiable UI/safety rules (§5), and the honesty rules for every string in
+the UI (no diagnosis, no treatment claims, no risk framing).
+
+**Status (original):** approved design inputs (style, palette, component picks, license policy decided
 by the project owner on 2026-10-18). This document is the build reference for Stage 6.
 Honesty rules apply to every string in this UI: no diagnosis, no treatment claims, no
 risk framing.

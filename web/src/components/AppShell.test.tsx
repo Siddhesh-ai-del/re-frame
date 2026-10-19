@@ -56,18 +56,19 @@ describe('AppShell', () => {
     ).not.toHaveAttribute('aria-current', 'page')
   })
 
-  it('styles the active route with the AA-safe accent text on the soft tint', () => {
-    // Stage 6e a11y: `--accent` on `--accent-soft` is 4.19:1 (axe-flagged);
-    // the active state must use the derived `text-accent-ink` token instead.
+  it('styles the active route as an ember ink pill with AA-safe text', () => {
+    // Stage 6f: active nav = `bg-ink` + `text-ink-on` (~11:1) — never
+    // `--accent` text on a tint (see contrast.test.ts guard).
     render(<App />)
     // Whichever route the shared jsdom location lands on, exactly one nav
-    // link carries aria-current="page" — that is the one with the tint.
+    // link carries aria-current="page" — that is the ink pill.
     const active = within(screen.getByRole('navigation')).getByRole('link', {
       current: 'page',
     })
-    expect(active.className).toContain('bg-accent-soft')
-    expect(active.className).toContain('text-accent-ink')
+    expect(active.className).toContain('bg-ink')
+    expect(active.className).toContain('text-ink-on')
     expect(active.className).not.toMatch(/(^|\s)text-accent(\s|$)/)
+    expect(active.className).not.toContain('bg-accent-soft')
   })
 
   it('navigates to /chat on click and renders the Chat heading', async () => {

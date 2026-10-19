@@ -39,7 +39,7 @@ export function TextReel({ words, finalText, intervalMs = 900 }: TextReelProps) 
     <p
       data-testid="text-reel"
       {...(settled ? { 'data-static': 'true' } : {})}
-      className="text-3xl font-medium text-ink"
+      className="font-display text-center text-3xl font-medium italic text-accent-ink"
     >
       {text}
     </p>

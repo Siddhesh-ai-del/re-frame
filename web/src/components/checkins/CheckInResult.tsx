@@ -23,12 +23,12 @@ export function CheckInResult({ result, instrument, onDone }: CheckInResultProps
   return (
     <section
       aria-label="Check-in result"
-      className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-surface p-4"
+      className="panel flex flex-col gap-3 rounded-[var(--radius-card)] p-5"
     >
-      <h2 className="text-sm font-medium text-ink">Your check-in</h2>
+      <h2 className="text-xs font-extrabold uppercase tracking-[0.14em] text-accent-ink">Your check-in</h2>
 
       <div className="flex items-baseline gap-3">
-        <span className="text-3xl tabular-nums text-ink">{result.total}</span>
+        <span className="font-display text-3xl font-bold tabular-nums text-ink md:text-[44px]">{result.total}</span>
         <span className="text-sm text-ink-muted">
           out of {instrument.total_max}
         </span>
@@ -43,7 +43,7 @@ export function CheckInResult({ result, instrument, onDone }: CheckInResultProps
       <button
         type="button"
         onClick={onDone}
-        className="mt-2 self-start rounded-[var(--radius-input)] border border-border bg-surface px-4 py-2 text-sm text-ink transition-colors duration-150 hover:bg-surface-sunk"
+        className="mt-2 self-start rounded-pill border border-border bg-surface px-4 py-2 text-sm text-ink transition-colors duration-150 hover:bg-white/70"
       >
         Done
       </button>

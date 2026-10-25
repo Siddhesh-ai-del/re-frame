@@ -78,7 +78,7 @@ def test_default_service_carries_both_route_families_on_one_app() -> None:
         instruments = client.get("/instruments")
         assert instruments.status_code == 200
         ids = [instrument["id"] for instrument in instruments.json()["instruments"]]
-        assert ids == ["phq9", "gad7", "k10"]
+        assert ids == ["phq9", "gad7", "k10", "scs_sf"]
 
         checkin = client.post("/checkins", json=_checkin_body("2026-10-18"))
         assert checkin.status_code == 200

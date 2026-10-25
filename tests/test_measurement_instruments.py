@@ -235,12 +235,12 @@ def test_spec_is_frozen() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Registry: exactly phq9 / gad7 / k10 active; scs_sf fail-closed pending
+# Registry: exactly phq9 / gad7 / k10 / scs_sf active; pending area empty
 # ---------------------------------------------------------------------------
 
 
-def test_registry_has_exactly_the_three_active_instruments() -> None:
-    assert set(INSTRUMENTS) == {"phq9", "gad7", "k10"}
+def test_registry_has_exactly_the_four_active_instruments() -> None:
+    assert set(INSTRUMENTS) == {"phq9", "gad7", "k10", "scs_sf"}
 
 
 def test_phq9_metadata() -> None:
@@ -337,29 +337,79 @@ def test_answer_options_exactly_cover_scale(instrument_id: str) -> None:
     assert values == list(range(spec.scale_min, spec.scale_max + 1))
 
 
-def test_scs_sf_is_pending_not_active() -> None:
-    assert "scs_sf" in PENDING_VERIFICATION
-    assert "scs_sf" not in INSTRUMENTS
+def test_scs_sf_is_active_not_pending() -> None:
+    assert "scs_sf" in INSTRUMENTS
+    assert "scs_sf" not in PENDING_VERIFICATION
 
 
-def test_scs_sf_pending_spec_has_ten_placeholder_items() -> None:
-    scs_sf = PENDING_VERIFICATION["scs_sf"]
-    assert len(scs_sf.items) == 10
-    for position, item in enumerate(scs_sf.items, start=1):
-        assert item.prompt == f"PENDING-VERIFICATION item {position}"
+def test_pending_verification_area_is_empty() -> None:
+    """The fail-closed holding area is kept (for future instruments) but empty."""
+    assert PENDING_VERIFICATION == {}
+
+
+def test_scs_sf_active_spec() -> None:
+    """The activated SCS-SF spec, verbatim against the official sheet.
+
+    Item prompts are verbatim from the self-compassion.org SCS-SF
+    information sheet (archived `.plans/scs-sf-source.txt`), with
+    typographic apostrophes normalized to ASCII and the missing trailing
+    period added to item 8 (a sentence-terminating full stop, not a
+    wording change).
+    """
+    scs_sf = INSTRUMENTS["scs_sf"]
+    assert scs_sf.title == "Self-Compassion Scale Short Form (SCS-SF)"
+    assert scs_sf.recall_period == "in difficult times (typically)"
+    assert len(scs_sf.items) == 12
+    prompts = {item.index: item.prompt for item in scs_sf.items}
+    assert prompts[1] == (
+        "When I fail at something important to me I become consumed by feelings of inadequacy."
+    )
+    assert prompts[2] == (
+        "I try to be understanding and patient towards those aspects of my personality "
+        "I don't like."
+    )
+    assert prompts[8] == (
+        "When I fail at something that's important to me, I tend to feel alone in my failure."
+    )
+    assert prompts[11] == "I'm disapproving and judgmental about my own flaws and inadequacies."
+    assert prompts[12] == (
+        "I'm intolerant and impatient towards those aspects of my personality I don't like."
+    )
+    # No typographic apostrophes anywhere in the prompts (PDF ' -> ASCII ').
+    for item in scs_sf.items:
+        assert "’" not in item.prompt
     assert (scs_sf.scale_min, scs_sf.scale_max) == (1, 5)
-    assert (scs_sf.total_min, scs_sf.total_max) == (10, 50)
-    assert "pending verification" in scs_sf.citation
+    assert (scs_sf.total_min, scs_sf.total_max) == (12, 60)
+    assert tuple(option.label for option in scs_sf.answer_options) == (
+        "Almost never",
+        "Occasionally",
+        "About half of the time",
+        "Fairly Often",
+        "Almost always",
+    )
+    bands = scs_sf.severity_bands
+    assert [(b.lower, b.upper) for b in bands] == [(12, 29), (30, 42), (43, 60)]
+    assert [b.label for b in bands] == ["low", "moderate", "high"]
+    assert "Raes" in scs_sf.citation
+    assert "AD HOC" in scs_sf.citation
+    assert "NO clinical norms" in scs_sf.citation
+
+
+def test_scs_sf_reverse_scoring_key() -> None:
+    """Reverse-scored set matches the sheet's scoring key exactly.
+
+    Self-Judgment (rev) 11,12 · Isolation (rev) 4,8 · Over-identification
+    (rev) 1,9 -> sorted (1, 4, 8, 9, 11, 12).
+    """
+    assert INSTRUMENTS["scs_sf"].reverse_scored == (1, 4, 8, 9, 11, 12)
 
 
 def test_get_instrument_returns_active_spec() -> None:
     assert get_instrument("phq9") is INSTRUMENTS["phq9"]
 
 
-def test_get_instrument_rejects_pending_instrument() -> None:
-    """A pending instrument must be indistinguishable from an unknown one."""
-    with pytest.raises(ValueError, match="scs_sf"):
-        get_instrument("scs_sf")
+def test_get_instrument_returns_scs_sf() -> None:
+    assert get_instrument("scs_sf") is INSTRUMENTS["scs_sf"]
 
 
 def test_get_instrument_rejects_unknown_id() -> None:

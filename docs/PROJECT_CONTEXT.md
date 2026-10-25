@@ -137,7 +137,10 @@ before or alongside professional care. Grounded in a verified 147-source researc
   in-conversation; covered by 2a/2c work).
 - **Stage 4 — Complete (sub-staged 4a/4b):** `reframe.measurement` — verbatim PHQ-9,
   GAD-7, K-10 instruments with fail-closed scoring and band-partition tests; SCS-SF held
-  fail-closed in pending-verification until its item wording is checked against Neff 2011;
+  fail-closed in pending-verification until its item wording is checked against Neff 2011
+  (RESOLVED 2026-10-25: wording verified verbatim against the official self-compassion.org
+  SCS-SF information sheet + Neff permission letter and activated in `INSTRUMENTS`;
+  `PENDING_VERIFICATION` now empty);
   longitudinal CheckInTracker with PHQ-9 item-9 escalation, early-worsening AE signals
   (provisional thresholds, NICE NG222 1.2.10), persistent >=16 referral prompts (1.4.3);
   routing bridges check-in flags onto the pipeline's escalation vocabulary.
@@ -188,8 +191,16 @@ before or alongside professional care. Grounded in a verified 147-source researc
   instrumentation and reporting, per the README roadmap table). Stage 8 — Android client
   follows after, reusing the proven API (D2/D3: web-first, then native; `--static`
   serving also means the same API process can serve a webview-backed client directly).
-  Open items carried: verify SCS-SF item wording against Neff 2011, then activate
-  in INSTRUMENTS. See README roadmap for the authoritative stage table.
+  Open items carried: none on SCS-SF — its item wording was verified against the
+  primary source (self-compassion.org SCS-SF information sheet + Neff permission letter,
+  2026-10-25) and it is now ACTIVE in `INSTRUMENTS`. Modeling decision recorded at
+  activation: `total` is the Raes et al. 2011 integer item-sum (12–60, the original
+  paper totaled rather than averaged); because every SCS-SF subscale has exactly 2
+  items, the sheet's mean-of-subscales total is algebraically sum/12, so the modern
+  mean score is derivable with no scoring-engine change. The low/moderate/high bands
+  (12–29 / 30–42 / 43–60) are the sheet's explicitly AD HOC rubric mapped ×12, with
+  no clinical norms — trait-level labels, not clinical severity.
+  See README roadmap for the authoritative stage table.
 - **Housekeeping (decided 2026-10-15):** research files (`distress-management-pipeline.md`,
   `.provenance.md`) are intentionally untracked in the repo root; `.drafts/` and `.plans/`
   are git-ignored working artifacts. The old docs-only clone at `/home/siddhesh/re-frame/`

@@ -54,8 +54,13 @@ def test_instruments_lists_every_active_instrument_in_order(client: TestClient) 
     response = client.get("/instruments")
     assert response.status_code == 200
     body = response.json()
-    assert len(body["instruments"]) == 3
-    assert [instrument["id"] for instrument in body["instruments"]] == ["phq9", "gad7", "k10"]
+    assert len(body["instruments"]) == 4
+    assert [instrument["id"] for instrument in body["instruments"]] == [
+        "phq9",
+        "gad7",
+        "k10",
+        "scs_sf",
+    ]
 
 
 def test_instruments_phq9_has_nine_items_and_item9_mentions_being_better_off_dead(

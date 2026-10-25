@@ -148,5 +148,6 @@ resources — **never** a dismissible toast, never hidden behind a menu.
 | **6d** | `/check-ins` (forms, results, trend charts, progress ring, flag notices) + dashboard shell + effects layer (aurora, vendored frost/clouds with license notice) + Settings | ✅ full check-in flow |
 | **6e** | PWA + static serving from FastAPI + mock-LLM generated-turn E2E + axe a11y pass + docs/roadmap wrap | ✅ complete matrix |
 
-**Open items:** none blocking; SCS-SF wording verification (Neff 2011) remains a
-backend-side carried item unrelated to UI build.
+**Open items:** none blocking; the SCS-SF wording verification (Neff 2011) is RESOLVED
+(verified against the primary source 2026-10-25 and activated backend-side — see
+`docs/PROJECT_CONTEXT.md`).

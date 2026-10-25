@@ -147,6 +147,54 @@ def test_k10_all_fives_is_severe() -> None:
 
 
 # ---------------------------------------------------------------------------
+# SCS-SF scoring: reverse arithmetic verified by hand in the comments
+# ---------------------------------------------------------------------------
+# Reverse-scored items are 1, 4, 8, 9, 11, 12 (six of twelve); the reverse
+# of value v on the 1..5 scale is 1 + 5 - v (1<->5, 2<->4, 3<->3).
+
+
+def test_scs_sf_all_ones_reverses_to_total_36_moderate() -> None:
+    # All "Almost never" (1). The six reverse items become 5 each; the six
+    # forward items stay 1: total = 6*5 + 6*1 = 36 -> mean 3.0 -> moderate.
+    result = score("scs_sf", [1] * 12)
+    assert result.total == 36
+    assert result.severity_label == "moderate"
+    assert result.responses == (1,) * 12
+
+
+def test_scs_sf_all_fives_reverses_to_total_36_moderate() -> None:
+    # All "Almost always" (5). The six reverse items become 1 each; the six
+    # forward items stay 5: total = 6*1 + 6*5 = 36 -> mean 3.0 -> moderate.
+    result = score("scs_sf", [5] * 12)
+    assert result.total == 36
+    assert result.severity_label == "moderate"
+
+
+def test_scs_sf_min_compassion_vector_is_total_12_low() -> None:
+    # Forward items (2,3,5,6,7,10) = 1; reverse items (1,4,8,9,11,12) = 5.
+    # After reverse scoring the reverse items become 1 too:
+    # total = 6*1 + 6*1 = 12 (the floor) -> low.
+    responses = [1] * 12
+    for index in (0, 3, 7, 8, 10, 11):  # items 1,4,8,9,11,12 (0-based)
+        responses[index] = 5
+    result = score("scs_sf", responses)
+    assert result.total == 12
+    assert result.severity_label == "low"
+    assert result.responses == tuple(responses)
+
+
+def test_scs_sf_max_compassion_vector_is_total_60_high() -> None:
+    # Forward items = 5; reverse items = 1, which reverse-score to 5:
+    # total = 12*5 = 60 (the ceiling) -> high.
+    responses = [5] * 12
+    for index in (0, 3, 7, 8, 10, 11):
+        responses[index] = 1
+    result = score("scs_sf", responses)
+    assert result.total == 60
+    assert result.severity_label == "high"
+
+
+# ---------------------------------------------------------------------------
 # Fail-closed validation: wrong count, bad types, out-of-range values
 # ---------------------------------------------------------------------------
 
@@ -156,8 +204,8 @@ def test_unknown_instrument_raises() -> None:
         score("nope", [0] * 9)
 
 
-def test_pending_instrument_raises_like_unknown() -> None:
-    with pytest.raises(ValueError, match="scs_sf"):
+def test_wrong_response_count_for_scs_sf_raises_naming_expectation() -> None:
+    with pytest.raises(ValueError, match="12"):
         score("scs_sf", [1] * 10)
 
 

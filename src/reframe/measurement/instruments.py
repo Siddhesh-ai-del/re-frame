@@ -5,6 +5,11 @@ listed in :data:`INSTRUMENTS`. Instruments whose item wording still needs
 verification against the published source live in :data:`PENDING_VERIFICATION`
 and are deliberately unreachable through :func:`get_instrument` — callers
 cannot tell a pending instrument from an unknown one.
+
+As of 2026-10 the pending area is EMPTY: SCS-SF was activated after its item
+wording was verified verbatim against the primary source (the official
+self-compassion.org SCS-SF information sheet + Neff permission letter). The
+fail-closed holding pattern remains for any future unverified instrument.
 """
 
 import re
@@ -250,30 +255,98 @@ K10 = InstrumentSpec(
     citation="Kessler & Andrews 1993 (K-10; ABS scoring bands; free to use)",
 )
 
+SCS_SF = InstrumentSpec(
+    id="scs_sf",
+    title="Self-Compassion Scale Short Form (SCS-SF)",
+    recall_period="in difficult times (typically)",  # dispositional, NOT a fixed window
+    items=(  # VERBATIM from the official sheet, 1..12
+        ItemSpec(
+            1,
+            "When I fail at something important to me I become consumed by feelings of inadequacy.",
+        ),
+        ItemSpec(
+            2,
+            "I try to be understanding and patient towards those aspects of my "
+            "personality I don't like.",
+        ),
+        ItemSpec(
+            3, "When something painful happens I try to take a balanced view of the situation."
+        ),
+        ItemSpec(
+            4,
+            "When I'm feeling down, I tend to feel like most other people are "
+            "probably happier than I am.",
+        ),
+        ItemSpec(5, "I try to see my failings as part of the human condition."),
+        ItemSpec(
+            6,
+            "When I'm going through a very hard time, I give myself the caring "
+            "and tenderness I need.",
+        ),
+        ItemSpec(7, "When something upsets me I try to keep my emotions in balance."),
+        ItemSpec(
+            8,
+            "When I fail at something that's important to me, I tend to feel alone in my failure.",
+        ),
+        ItemSpec(
+            9, "When I'm feeling down I tend to obsess and fixate on everything that's wrong."
+        ),
+        ItemSpec(
+            10,
+            "When I feel inadequate in some way, I try to remind myself that "
+            "feelings of inadequacy are shared by most people.",
+        ),
+        ItemSpec(11, "I'm disapproving and judgmental about my own flaws and inadequacies."),
+        ItemSpec(
+            12, "I'm intolerant and impatient towards those aspects of my personality I don't like."
+        ),
+    ),
+    scale_min=1,
+    scale_max=5,
+    total_min=12,
+    total_max=60,
+    answer_options=(
+        # Endpoints verbatim on the SCS-SF sheet (2,3,4 unlabeled there);
+        # middle anchors are those used by Neff's own online SCS test
+        # (self-compassion.org/self-compassion-test, verified 2026-10-25):
+        # "1 - Almost Never / 2 - Occasionally / 3 - About half of the time /
+        # 4 - Fairly Often / 5 - Almost Always". Frequency framing matches the
+        # sheet's instruction "Indicate how often you behave in the stated
+        # manner". Casing follows the sheet for endpoints.
+        AnswerOption(1, "Almost never"),
+        AnswerOption(2, "Occasionally"),
+        AnswerOption(3, "About half of the time"),
+        AnswerOption(4, "Fairly Often"),
+        AnswerOption(5, "Almost always"),
+    ),
+    severity_bands=(
+        # The sheet's ad hoc rubric is on the MEAN scale (1.0-2.49 low,
+        # 2.5-3.5 moderate, 3.51-5.0 high); mapped to the integer sum by
+        # x12 (each subscale has 2 items, so the total mean = sum/12).
+        SeverityBand("low", 12, 29),
+        SeverityBand("moderate", 30, 42),
+        SeverityBand("high", 43, 60),
+    ),
+    citation=(
+        "Raes, Pommier, Neff & Van Gucht 2011, Clinical Psychology & "
+        "Psychotherapy (SCS-SF; free to use with attribution per Neff / "
+        "self-compassion.org). Response anchors 1=Almost never…5=Almost always "
+        "are the standard SCS scale the short form inherits. Total = sum of the "
+        "12 items after reverse-scoring items 1,4,8,9,11,12 (the Raes et al. "
+        "2011 item-total method); the modern mean score is total/12 on a 1–5 "
+        "scale. The low/moderate/high bands are the source's explicitly AD HOC "
+        "rubric — there are NO clinical norms for self-compassion; treat them "
+        "as descriptive, not diagnostic."
+    ),
+    reverse_scored=(1, 4, 8, 9, 11, 12),
+)
+
 #: ACTIVE registry. Only confirmed free, verbatim-worded instruments.
-INSTRUMENTS: dict[str, InstrumentSpec] = {spec.id: spec for spec in (PHQ9, GAD7, K10)}
+INSTRUMENTS: dict[str, InstrumentSpec] = {spec.id: spec for spec in (PHQ9, GAD7, K10, SCS_SF)}
 
 #: Fail-closed holding area: specs here are NOT reachable via :func:`get_instrument`.
-PENDING_VERIFICATION: dict[str, InstrumentSpec] = {
-    "scs_sf": InstrumentSpec(
-        id="scs_sf",
-        title="Self-Compassion Scale Short Form (SCS-SF)",
-        recall_period="PENDING-VERIFICATION recall period",
-        items=tuple(ItemSpec(i, f"PENDING-VERIFICATION item {i}") for i in range(1, 11)),
-        scale_min=1,
-        scale_max=5,
-        total_min=10,
-        total_max=50,
-        answer_options=tuple(
-            AnswerOption(value, f"PENDING-VERIFICATION option {value}") for value in range(1, 6)
-        ),
-        severity_bands=(),
-        citation=(
-            "Neff 2011, Self and Identity (SCS-SF) — item wording pending "
-            "verification against the published source before activation"
-        ),
-    )
-}
+#: EMPTY as of 2026-10 — SCS-SF was activated after primary-source verification.
+PENDING_VERIFICATION: dict[str, InstrumentSpec] = {}
 
 
 def get_instrument(instrument_id: str) -> InstrumentSpec:

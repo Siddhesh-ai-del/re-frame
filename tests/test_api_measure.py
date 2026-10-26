@@ -289,3 +289,73 @@ def test_histories_are_isolated_per_instrument(client: TestClient) -> None:
     )
     assert client.get("/checkins/phq9").json()["checkins"] != []
     assert client.get("/checkins/gad7").json() == {"checkins": []}
+
+
+# ---------------------------------------------------------------------------
+# Stage 7a wiring (D5): an early-worsening flag appends an automatic AE
+# ---------------------------------------------------------------------------
+
+
+def _ae_client() -> TestClient:
+    """A bare app whose check-in routes share an AE log attached to app.state."""
+    from reframe.evaluation import AdverseEventLog
+
+    app = FastAPI()
+    ae_log = AdverseEventLog()
+    app.state.ae_log = ae_log  # create_service attaches the log the same way
+    include_measurement_routes(app, CheckInTracker(), ae_log)
+    return TestClient(app)
+
+
+def test_early_worsening_sequence_appends_exactly_one_automatic_adverse_event() -> None:
+    from reframe.evaluation import AESource, AEType
+
+    client = _ae_client()
+
+    baseline = client.post(
+        "/checkins",
+        json={"instrument_id": "phq9", "responses": [0] * 9, "date": "2026-10-01"},
+    )
+    assert baseline.status_code == 200
+    assert client.app.state.ae_log.events() == ()  # baseline: no flag, no event
+
+    second = client.post(
+        "/checkins",
+        json={"instrument_id": "phq9", "responses": REFERRAL_RESPONSES, "date": "2026-10-08"},
+    )
+    assert second.status_code == 200
+    assert "early_worsening" in second.json()["flags"]
+
+    events = client.app.state.ae_log.events()
+    assert len(events) == 1
+    event = events[0]
+    assert event.type is AEType.TRANSIENT_EARLY_WORSENSING
+    assert event.source is AESource.AUTOMATIC
+    # D1: the reference is a score locator, never the response vector.
+    assert event.reference == "check-in phq9 2026-10-08 total=16"
+
+
+def test_non_flagged_checkin_appends_no_adverse_event() -> None:
+    client = _ae_client()
+
+    response = client.post(
+        "/checkins",
+        json={"instrument_id": "phq9", "responses": [0] * 8 + [1], "date": "2026-10-18"},
+    )
+
+    assert response.status_code == 200
+    assert client.app.state.ae_log.events() == ()
+
+
+def test_two_argument_call_sites_remain_wired_without_an_ae_log() -> None:
+    # Library default (D8): ae_log=None keeps every existing 2-arg call working.
+    tracker = CheckInTracker()
+    app = FastAPI()
+    include_measurement_routes(app, tracker)
+    client = TestClient(app)
+
+    response = client.post(
+        "/checkins",
+        json={"instrument_id": "phq9", "responses": [0] * 9, "date": "2026-10-01"},
+    )
+    assert response.status_code == 200

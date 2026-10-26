@@ -211,10 +211,224 @@
           }
         }
       }
+    },
+    "/evaluation/adverse-events": {
+      "get": {
+        "summary": "List Adverse Events",
+        "description": "List every logged adverse event in insertion order (metadata only).",
+        "operationId": "list_adverse_events_evaluation_adverse_events_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdverseEventListOut"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Record Adverse Event",
+        "description": "Record one reviewer-entered adverse event (source stamped ``review``).\n\nThe body's ``serious`` (when present) overrides the pre-specified\ntaxonomy default (D2); ``reference`` must be a locator, never\nmessage content (D1). Failures map to a generic 422; nothing about\nthe record's internals reaches the wire.",
+        "operationId": "record_adverse_event_evaluation_adverse_events_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdverseEventCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdverseEventOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/evaluation/adverse-events/{event_id}/followup": {
+      "post": {
+        "summary": "Complete Adverse Event Followup",
+        "description": "Mark an adverse event's follow-up completed (the 48-hour marker, D3).\n\nBody-free by design: the call itself records that a reviewer\naddressed the event. Unknown ids are a generic 404 — a follow-up\nagainst an unlogged id is a loud failure, never a silent no-op.",
+        "operationId": "complete_adverse_event_followup_evaluation_adverse_events__event_id__followup_post",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdverseEventOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AdverseEventCreateIn": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Type"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          },
+          "serious": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serious"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "AdverseEventCreateIn",
+        "description": "Inbound reviewer record: known-shape fields only; source is NOT accepted (D4)."
+      },
+      "AdverseEventListOut": {
+        "properties": {
+          "adverse_events": {
+            "items": {
+              "$ref": "#/components/schemas/AdverseEventOut"
+            },
+            "type": "array",
+            "title": "Adverse Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "adverse_events"
+        ],
+        "title": "AdverseEventListOut",
+        "description": "Every logged adverse event, in insertion order."
+      },
+      "AdverseEventOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "detected_at": {
+            "type": "string",
+            "title": "Detected At"
+          },
+          "serious": {
+            "type": "boolean",
+            "title": "Serious"
+          },
+          "followup_due_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Followup Due At"
+          },
+          "followup_completed": {
+            "type": "boolean",
+            "title": "Followup Completed"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "source",
+          "detected_at",
+          "serious",
+          "followup_due_at",
+          "followup_completed",
+          "reference"
+        ],
+        "title": "AdverseEventOut",
+        "description": "One logged adverse event on the wire: metadata and locators only (D1)."
+      },
       "AnswerOptionOut": {
         "properties": {
           "value": {

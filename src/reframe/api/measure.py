@@ -23,7 +23,13 @@ boundary:
 - ``DELETE /checkins`` purges every recorded check-in (all instruments) and
   returns the number removed; it takes no path parameter, so no
   instrument-id validation applies — the GET history contract above is
-  untouched.
+  untouched. The purge touches check-in rows only: adverse-event records
+  are safety monitoring records and survive independently (D6, see
+  ``docs/evaluation-harness.md`` and :mod:`reframe.evaluation`).
+- Optional stage-7a wiring (D5): when an ``ae_log`` is provided, a
+  recorded check-in carrying the EARLY_WORSENSING flag appends one
+  ``transient_early_worsening`` event to it — outside the ``ValueError``
+  handler, because an AE-integrity failure is a 500, never a 422 (D7).
 
 Every record-level failure (unknown instrument, bad responses, out-of-order
 date) maps to one generic 422 detail — no internals, no repr of input.
@@ -35,6 +41,8 @@ import re
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from reframe.evaluation.detectors import early_worsening_event
+from reframe.evaluation.log import AdverseEventLog
 from reframe.measurement.instruments import INSTRUMENTS, InstrumentSpec, get_instrument
 from reframe.measurement.routing import (
     CHECKIN_CONCERN_MESSAGE_ID,
@@ -198,7 +206,11 @@ def _to_checkin_out(checkin: CheckIn) -> CheckInOut:
     )
 
 
-def include_measurement_routes(app: FastAPI, tracker: CheckInTracker) -> None:
+def include_measurement_routes(
+    app: FastAPI,
+    tracker: CheckInTracker,
+    ae_log: AdverseEventLog | None = None,
+) -> None:
     """Register the measurement endpoints on ``app`` over ``tracker``.
 
     ``POST /checkins`` returns 200 on success (not 201 — the recorded
@@ -210,6 +222,12 @@ def include_measurement_routes(app: FastAPI, tracker: CheckInTracker) -> None:
     ``DELETE /checkins`` purges through the tracker itself, so a durable
     tracker empties its store and its memory together while an in-memory
     tracker empties its records — one honest count either way.
+
+    ``ae_log`` (stage 7a, optional): when provided, a recorded check-in
+    carrying EARLY_WORSENSING appends one automatic
+    ``transient_early_worsening`` event (D5). The library default stays
+    ``None``; ``create_service`` always passes a real log so the product
+    path can never silently skip safety recording (D8).
     """
 
     @app.get("/instruments", response_model=InstrumentListOut)
@@ -228,6 +246,13 @@ def include_measurement_routes(app: FastAPI, tracker: CheckInTracker) -> None:
             )
         except ValueError:
             raise HTTPException(status_code=422, detail=CHECKIN_UNRECORDED_DETAIL) from None
+        # Stage 7a (D5/D7): OUTSIDE the ValueError handler above — an
+        # AE-integrity failure is a 500 through the app's generic handler,
+        # never a 422, and never silently swallowed.
+        if ae_log is not None:
+            event = early_worsening_event(checkin)
+            if event is not None:
+                ae_log.append(event)
         return _to_checkin_out(checkin)
 
     @app.get("/checkins/{instrument_id}", response_model=CheckInListOut)

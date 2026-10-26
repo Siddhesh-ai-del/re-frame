@@ -108,6 +108,34 @@ before or alongside professional care. Grounded in a verified 147-source researc
       contrast-paired with `--ink` in `contrast.test.ts`. `--accent-bright #E8853C` is
       decorative-only (never a text background).
 
+## Standing decisions (Stage 7a completion, 2026-10-26 — adverse-event logging)
+
+16. **The six AE types are pre-specified DESIGN definitions, never "validated
+    published" ones** — no GenAI intervention defines an adverse event
+    (Olisaeloka et al. 2026, *Healthcare*, DOI 10.3390/healthcare14101395);
+    AI-specific direction per FDA Digital Health Advisory Committee (6 Nov 2025);
+    early-worsening signal per NICE NG222 rec. 1.2.10. Every string (code,
+    docs, API) keeps that honest framing.
+17. **D1 — no message content in AE records, ever.** A record carries a
+    `reference` locator only (≤ 200 chars, stripped/validated): instrument
+    id/date/total, an audit `sha256[:12]` digest, or a reviewer locator.
+18. **D2/D3 — seriousness is pre-specified per type, overridable at record
+    time; serious events get a computed 48-hour follow-up marker**
+    (`followup_due_at = detected_at + SERIOUS_FOLLOWUP_HOURS (48)`, a property —
+    never a stored column), settable done via the followup endpoint.
+19. **D4/D5 — sources are `automatic` / `audit` / `review`, with the HTTP POST
+    always stamping `review` server-side; exactly one field signal is
+    auto-detected today** (`EARLY_WORSENSING` check-in flag →
+    `transient_early_worsening`; audit misses → `crisis_response_failure`,
+    pure, for 7b's CLI). The safety layer stays untouched — correctly
+    escalated crisis turns are the product working, never AEs.
+20. **D6/D7/D8 — AE records are safety records, independent of the check-in
+    purge (`DELETE /checkins` never touches them); durable append failures
+    propagate as generic 500s (all-or-nothing, never swallowed, never a 422);
+    `create_service` ALWAYS builds an AE log** (durable with `db_path`,
+    in-memory otherwise) so the product path can never silently skip safety
+    recording. Generic 422/404 details only — no internals leak.
+
 ## How we work (established conventions)
 
 - **Stack:** Python ≥ 3.11 (FastAPI planned for the API), TypeScript/React planned for
@@ -182,13 +210,31 @@ before or alongside professional care. Grounded in a verified 147-source researc
   CTA gradients) with zero behavior change — safety surfaces, verbatim copy, testids,
   and roles untouched (D15); PWA manifest/icons/theme-color retinted to terracotta.
   README roadmap flipped to Complete with evidence; CHANGELOG updated.
-- **Test suite:** backend 689 tests at 100% statement and branch coverage; web 373
+- **Stage 7 — In progress; sub-stage 7a Complete:** `reframe.evaluation` —
+  the six pre-specified (design, not validated-published) AE types +
+  `AE_DEFINITIONS`, the frozen fail-closed `AdverseEvent` record (locator-only
+  `reference`, D2 seriousness, computed 48-hour follow-up marker), pure
+  detectors (check-in `EARLY_WORSENSING` → automatic `transient_early_worsening`;
+  `AuditReport.misses` → `audit` `crisis_response_failure`s), the
+  in-memory + durable SQLite AE logs (all-or-nothing writes, fail-closed
+  loading), and `reframe.api.evaluation` (`GET/POST /evaluation/adverse-events`
+  + followup, generic 422/404 details only). `create_service` always builds the
+  log (`app.state.ae_log`), the check-in route appends the automatic event, and
+  `DELETE /checkins` never touches AE records. 7a evidence: 801 backend tests at
+  100% coverage (104 new), ruff/format/mypy clean, OpenAPI regenerated
+  deterministically with the three new `/evaluation/*` operations, web gates +
+  E2E 31/31 green; `docs/evaluation-harness.md` documents the taxonomy. Still
+  planned: 7b (metrics, progression criteria, report, `GET /evaluation/report`,
+  CLI `--report`/`--audit`) and 7c (report UI).
+- **Test suite:** backend 801 tests at 100% statement and branch coverage; web 373
   frontend tests at 99.09% statements / 94.96% branches; 31 Playwright E2E specs (21
   keyless safety specs unchanged + 5 axe + 3 generated-turn + 2 PWA offline), axe zero
   violations on all five routes; CI green
   (ruff, mypy strict, Python 3.12 + 3.14 matrix, gitleaks).
-- **Next: Stage 7 — evaluation harness** (adverse-event logging, feasibility-pilot
-  instrumentation and reporting, per the README roadmap table). Stage 8 — Android client
+- **Next: Stage 7 sub-stage 7b** — evaluation-harness continuation:
+  feasibility-pilot instrumentation and reporting (metrics, progression
+  criteria, structured report), then 7c report UI, per the README roadmap
+  table. Stage 8 — Android client
   follows after, reusing the proven API (D2/D3: web-first, then native; `--static`
   serving also means the same API process can serve a webview-backed client directly).
   Open items carried: none on SCS-SF — its item wording was verified against the

@@ -2,10 +2,15 @@
 
 ``create_service`` assembles the v1 service from tested parts WITHOUT changing
 their semantics: the conversation pipeline (safety -> retrieval -> generation
--> output filter) is created by :func:`reframe.api.app.create_app`, and the
+-> output filter) is created by :func:`reframe.api.app.create_app`, the
 check-in routes from :func:`reframe.api.measure.include_measurement_routes`
 are added over a tracker — so chat and check-ins both route through the same
-deterministic safety layers above the HTTP boundary.
+deterministic safety layers above the HTTP boundary. Stage 7a adds the
+adverse-event log: a log is ALWAYS built (durable when ``db_path`` is given,
+in-memory otherwise), attached to ``app.state.ae_log``, and wired into BOTH
+the check-in route (early-worsening detection) and the
+``/evaluation/adverse-events`` endpoints — the product path can never
+silently skip safety recording (D8).
 
 Static serving (stage 6e): when ``static_dir`` points at a directory (the
 built SPA in ``web/dist``), a ``StaticFiles`` mount with an ``index.html``
@@ -30,8 +35,11 @@ from fastapi import FastAPI
 from starlette.staticfiles import StaticFiles
 
 from reframe.api.app import create_app
+from reframe.api.evaluation import include_evaluation_routes
 from reframe.api.measure import include_measurement_routes
 from reframe.content import default_library
+from reframe.evaluation.log import AdverseEventLog, PersistentAdverseEventLog
+from reframe.evaluation.store import SqliteAdverseEventStore
 from reframe.generation import ConstrainedGenerator
 from reframe.measurement.persistent import PersistentCheckInTracker
 from reframe.measurement.store import SqliteCheckInStore
@@ -80,6 +88,16 @@ def create_service(
     shutdown handler, so a server shutdown (or a test's ``TestClient``
     context) releases the SQLite connection.
 
+    AE log wiring (stage 7a, D8): a log is ALWAYS built — a durable
+    ``PersistentAdverseEventLog`` over ``SqliteAdverseEventStore(db_path)``
+    whenever ``db_path`` is given (even alongside an injected
+    ``tracker_factory``), a plain in-memory ``AdverseEventLog`` otherwise.
+    It is attached to ``app.state.ae_log`` (``app.state.ae_store`` only when
+    one was created, closed by the same shutdown handler) and injected into
+    both the check-in route (early-worsening detection) and the
+    ``/evaluation/adverse-events`` endpoints — the product path can never
+    silently skip safety recording.
+
     Static serving: when ``static_dir`` is an existing directory it is mounted
     at ``/`` LAST (after every API route), serving the built SPA with a
     ``index.html`` fallback for client routes. A ``None``/missing/non-directory
@@ -100,15 +118,31 @@ def create_service(
         tracker = PersistentCheckInTracker(store)
     else:
         tracker = CheckInTracker()
-    include_measurement_routes(app, tracker)
-    app.state.store = store
 
-    async def _close_store_on_shutdown() -> None:
-        """Close the SQLite store; a clean no-op when no store was created."""
+    # Stage 7a (D8): the AE log is ALWAYS built — durable when db_path is
+    # given (regardless of tracker_factory), in-memory otherwise.
+    ae_store: SqliteAdverseEventStore | None = None
+    ae_log: AdverseEventLog
+    if db_path is not None:
+        ae_store = SqliteAdverseEventStore(db_path)
+        ae_log = PersistentAdverseEventLog(ae_store)
+    else:
+        ae_log = AdverseEventLog()
+
+    include_measurement_routes(app, tracker, ae_log)
+    include_evaluation_routes(app, ae_log)
+    app.state.store = store
+    app.state.ae_log = ae_log
+    app.state.ae_store = ae_store
+
+    async def _close_stores_on_shutdown() -> None:
+        """Close the SQLite stores; a clean no-op when none were created."""
         if app.state.store is not None:
             app.state.store.close()
+        if app.state.ae_store is not None:
+            app.state.ae_store.close()
 
-    app.router.add_event_handler("shutdown", _close_store_on_shutdown)
+    app.router.add_event_handler("shutdown", _close_stores_on_shutdown)
 
     # LAST: the SPA mount must never shadow a registered API route (see the
     # module docstring — GET /chat falls through here, POST /chat never does).

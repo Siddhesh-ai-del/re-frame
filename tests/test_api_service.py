@@ -364,3 +364,83 @@ def test_static_serving_never_escapes_the_served_directory(tmp_path: Path) -> No
         escaped = client.get("/%2e%2e/secret.txt")
 
     assert "TOP-SECRET-DO-NOT-SERVE" not in escaped.text
+
+
+# ---------------------------------------------------------------------------
+# Stage 7a (D8): the AE log is ALWAYS composed — never a silent no-op
+# ---------------------------------------------------------------------------
+
+
+def _early_worsening_sequence(client: TestClient) -> None:
+    """Record the baseline + early-worsening pair that trips the AE detector."""
+    worsening = {"instrument_id": "phq9", "responses": [2] * 8 + [0], "date": "2026-10-08"}
+    assert client.post("/checkins", json=_checkin_body("2026-10-01")).status_code == 200
+    assert client.post("/checkins", json=worsening).status_code == 200
+
+
+def test_create_service_always_exposes_an_adverse_event_log() -> None:
+    generator, _fake = make_generator([WELL_BEHAVED_REPLY])
+    app = create_service(generator=generator)
+
+    with TestClient(app) as client:
+        assert app.state.ae_log is not None
+        assert app.state.ae_store is None  # in-memory default, no durable sink
+        # The product path can never silently skip safety recording: the
+        # early-worsening check-in sequence must land an automatic AE.
+        _early_worsening_sequence(client)
+        events = app.state.ae_log.events()
+        assert [event.type.value for event in events] == ["transient_early_worsening"]
+        assert events[0].source.value == "automatic"
+
+
+def test_create_service_with_tracker_factory_and_db_path_still_gets_a_durable_ae_log(
+    tmp_path: Path,
+) -> None:
+    generator, _fake = make_generator([WELL_BEHAVED_REPLY])
+    app = create_service(
+        generator=generator,
+        tracker_factory=CheckInTracker,
+        db_path=tmp_path / "s.db",
+    )
+
+    with TestClient(app):
+        assert app.state.store is None  # the injected tracker is in-memory
+        assert app.state.ae_log is not None
+        assert app.state.ae_store is not None  # db_path still means a durable AE log
+
+
+def test_adverse_events_survive_a_restart_when_db_path_is_durable(tmp_path: Path) -> None:
+    db_path = tmp_path / "s.db"
+    generator, _fake = make_generator([WELL_BEHAVED_REPLY])
+
+    first_app = create_service(generator=generator, db_path=db_path)
+    with TestClient(first_app) as client:
+        assert first_app.state.ae_store is not None
+        recorded = client.post(
+            "/evaluation/adverse-events",
+            json={"type": "sycophancy_episode", "reference": "session 3 turn 14"},
+        )
+        assert recorded.status_code == 200
+
+    # Fresh composition over the same file: the AE replays from disk.
+    restarted_app = create_service(generator=generator, db_path=db_path)
+    with TestClient(restarted_app) as client:
+        listed = client.get("/evaluation/adverse-events")
+        assert listed.status_code == 200
+        adverse_events = listed.json()["adverse_events"]
+        assert [entry["reference"] for entry in adverse_events] == ["session 3 turn 14"]
+        assert adverse_events[0]["source"] == "review"
+
+
+def test_shutdown_handler_closes_the_adverse_event_store(tmp_path: Path) -> None:
+    generator, _fake = make_generator([WELL_BEHAVED_REPLY])
+    app = create_service(generator=generator, db_path=tmp_path / "s.db")
+
+    with TestClient(app):
+        pass
+
+    ae_store = app.state.ae_store
+    assert ae_store is not None
+    # Public behavior after shutdown: the connection is closed fail-closed.
+    with pytest.raises(sqlite3.ProgrammingError):
+        ae_store.load()

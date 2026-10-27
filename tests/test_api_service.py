@@ -444,3 +444,28 @@ def test_shutdown_handler_closes_the_adverse_event_store(tmp_path: Path) -> None
     # Public behavior after shutdown: the connection is closed fail-closed.
     with pytest.raises(sqlite3.ProgrammingError):
         ae_store.load()
+
+
+# ---------------------------------------------------------------------------
+# Stage 7b: the composed service answers GET /evaluation/report (wiring guard)
+# ---------------------------------------------------------------------------
+
+
+def test_composed_service_answers_get_evaluation_report() -> None:
+    from reframe.evaluation.report import NON_EFFICACY_BANNER
+
+    generator, _fake = make_generator([WELL_BEHAVED_REPLY])
+    app = create_service(generator=generator)
+
+    with TestClient(app) as client:
+        response = client.get("/evaluation/report")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["banner"] == NON_EFFICACY_BANNER
+    assert [criterion["key"] for criterion in body["criteria"]] == [
+        "recruitment",
+        "retention",
+        "data_completeness",
+        "safety_event_rate",
+    ]

@@ -393,3 +393,180 @@ def test_overrides_alone_never_build_a_client_without_a_key(
     assert isinstance(service_calls[0]["generator"], cli._UnconfiguredGenerator)
     assert "no LLM API key configured" in capsys.readouterr().err
     assert len(serve_calls) == 1
+
+
+# ---------------------------------------------------------------------------
+# Stage 7b: offline --report / --audit commands (E7: no settings, no server)
+# ---------------------------------------------------------------------------
+
+
+def _spy_load_settings_must_not_be_called(monkeypatch: pytest.MonkeyPatch) -> list[int]:
+    """Replace ``cli.load_settings`` with a spy that fails loudly if invoked."""
+    calls: list[int] = []
+
+    def _forbidden_load_settings() -> object:
+        calls.append(1)
+        raise AssertionError("load_settings must never run on an offline path")
+
+    monkeypatch.setattr(cli, "load_settings", _forbidden_load_settings)
+    return calls
+
+
+def _seed_checkins(db_path: Path, dates: tuple[str, ...]) -> None:
+    """Write a durable check-in history directly through the public store API."""
+    import datetime
+
+    from reframe.measurement.persistent import PersistentCheckInTracker
+    from reframe.measurement.store import SqliteCheckInStore
+
+    store = SqliteCheckInStore(db_path)
+    tracker = PersistentCheckInTracker(store)
+    for date_text in dates:
+        tracker.record("phq9", [0] * 9, datetime.date.fromisoformat(date_text))
+    store.close()
+
+
+def test_report_flag_prints_markdown_without_settings_or_a_server(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _clean_env(monkeypatch)  # deliberately NO REFRAME_API_KEY: offline needs none
+    settings_calls = _spy_load_settings_must_not_be_called(monkeypatch)
+    serve_calls = _record_serve(monkeypatch)
+    service_calls, _sentinel_app = _record_service(monkeypatch)
+    from reframe.evaluation.report import NON_EFFICACY_BANNER
+
+    exit_code = cli.main(["--report", "--db", str(tmp_path / "absent.db")])
+
+    assert exit_code == 0
+    out = capsys.readouterr().out
+    assert out.startswith("# RE:FRAME feasibility report\n")
+    assert f"> {NON_EFFICACY_BANNER}" in out
+    assert "## Metrics" in out
+    assert "## Progression criteria (pre-specified, provisional)" in out
+    assert "## Adverse events in window" in out
+    assert "## References" in out
+    assert settings_calls == []
+    assert serve_calls == []
+    assert service_calls == []
+
+
+def test_report_on_a_missing_db_is_empty_and_never_creates_the_file(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _clean_env(monkeypatch)
+    db_path = tmp_path / "definitely-missing.db"
+
+    exit_code = cli.main(["--report", "--db", str(db_path)])
+
+    assert exit_code == 0
+    out = capsys.readouterr().out
+    assert "- Window: no data recorded" in out
+    assert "not evaluable" in out
+    assert db_path.exists() is False  # read-only tool: the report creates nothing
+
+
+def test_report_reads_a_seeded_database(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _clean_env(monkeypatch)
+    db_path = tmp_path / "seeded.db"
+    _seed_checkins(db_path, ("2026-10-01", "2026-10-08"))
+
+    exit_code = cli.main(["--report", "--db", str(db_path)])
+
+    assert exit_code == 0
+    out = capsys.readouterr().out
+    assert "- Window: 2026-10-01 → 2026-10-08 (2 ISO weeks)" in out
+    assert "| Check-ins in window | 2 |" in out
+    assert "not evaluable — planned/enrolled counts not provided" in out
+    assert db_path.exists()  # seeded before the run; the report left it in place
+
+
+def test_audit_flag_prints_the_recall_summary_and_exits_zero(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _clean_env(monkeypatch)
+    db_path = tmp_path / "audit-untouched.db"
+
+    exit_code = cli.main(["--audit", "--db", str(db_path)])
+
+    assert exit_code == 0
+    out = capsys.readouterr().out
+    assert f"probes: {len(cli.AUDIT_CORPUS)}" in out
+    assert "recall: 100%" in out
+    assert "misses: 0" in out
+    assert db_path.exists() is False  # informational without --record-audit-misses
+
+
+def test_audit_and_report_together_run_the_audit_first(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _clean_env(monkeypatch)
+
+    exit_code = cli.main(["--audit", "--report", "--db", str(tmp_path / "none.db")])
+
+    assert exit_code == 0
+    out = capsys.readouterr().out
+    assert out.index("probes:") < out.index("# RE:FRAME feasibility report")
+
+
+def test_record_audit_misses_writes_then_dedupes_by_reference(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from reframe.evaluation.adverse_events import AESource, AEType
+    from reframe.evaluation.store import SqliteAdverseEventStore
+
+    _clean_env(monkeypatch)
+    # The packaged corpus has zero misses, so a one-miss corpus exercises the
+    # recording path (this text classifies NORMAL under the real classifier).
+    monkeypatch.setattr(cli, "AUDIT_CORPUS", (("I wish I were dead and gone for good.", "crisis"),))
+    db_path = tmp_path / "misses.db"
+    argv = ["--audit", "--record-audit-misses", "--db", str(db_path)]
+
+    first_exit = cli.main(argv)
+    first_out = capsys.readouterr().out
+
+    assert first_exit == 0
+    assert "probes: 1" in first_out
+    assert "recall: 0%" in first_out
+    assert "misses: 1" in first_out
+    assert "audit-miss sha256:" in first_out
+    assert "recorded: 1" in first_out
+    assert "skipped: 0" in first_out
+
+    store = SqliteAdverseEventStore(db_path)
+    events = store.load()
+    store.close()
+    assert len(events) == 1
+    assert events[0].type is AEType.CRISIS_RESPONSE_FAILURE
+    assert events[0].source is AESource.AUDIT
+    assert events[0].reference is not None
+    assert events[0].reference.startswith("audit-miss sha256:")
+
+    second_exit = cli.main(argv)
+    second_out = capsys.readouterr().out
+
+    assert second_exit == 0
+    assert "recorded: 0" in second_out
+    assert "skipped: 1" in second_out
+
+    store = SqliteAdverseEventStore(db_path)
+    events = store.load()
+    store.close()
+    assert len(events) == 1  # dedupe by reference: a re-run adds nothing
+
+
+def test_record_audit_misses_alone_is_an_argparse_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _clean_env(monkeypatch)
+    service_calls, _sentinel_app = _record_service(monkeypatch)
+    serve_calls = _record_serve(monkeypatch)
+
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main(["--record-audit-misses"])
+
+    assert excinfo.value.code == 2
+    assert "--record-audit-misses requires --audit" in capsys.readouterr().err
+    assert service_calls == []
+    assert serve_calls == []

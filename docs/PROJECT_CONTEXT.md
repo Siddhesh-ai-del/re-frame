@@ -136,6 +136,31 @@ before or alongside professional care. Grounded in a verified 147-source researc
     in-memory otherwise) so the product path can never silently skip safety
     recording. Generic 422/404 details only — no internals leak.
 
+## Standing decisions (Stage 7b completion, 2026-10-26 — pilot metrics, progression criteria, feasibility report)
+
+21. **E1 — this is a feasibility pilot's instrumentation, not a validated efficacy
+    instrument.** Every report carries `NON_EFFICACY_BANNER` verbatim; progression
+    bands are operational review statuses, never clinical or regulatory claims.
+22. **E2/E3 — reporting window: 28 days by default, 7–90 day bounds; weeks are
+    ISO week-start dates (Monday)**, so a window can span one more ISO week than
+    whole weeks (e.g. 2026-10-01→07 = 2 weeks).
+23. **E4 — only pre-specified, derivable criteria are evaluated; anything
+    requiring external data is `not_evaluable` with its reason, never a score.**
+24. **E5 — green/amber/red are pre-specified thresholds, provisional, cited
+    verbatim from the spec's §0; a class is a review status only and is never
+    back-propagated into safety behaviour** (no classifier/pipeline change).
+25. **E6 — completion, engagement, safety-signal and audit-recall criteria
+    derive only from stored data (check-ins, AE log, audit results).**
+26. **E7 — the audit corpus ships in-tree (`reframe.safety.audit_corpus`),
+    12 seeded rows labelled `seeded-audit`, positive-only + neutral, recall
+    reported honestly (misses listed, never hidden); it is a regression corpus,
+    not a claim of clinical coverage.**
+27. **E8 — `--record-audit-misses` writes only `reference` digests of missed
+    probe rows; never message text.**
+28. **E9 — `GET /evaluation/report` is read-only and returns ids/counts/status
+    only (banner, window, metrics, criteria); generic 422 detail on invalid
+    bounds.**
+
 ## How we work (established conventions)
 
 - **Stack:** Python ≥ 3.11 (FastAPI planned for the API), TypeScript/React planned for
@@ -210,7 +235,7 @@ before or alongside professional care. Grounded in a verified 147-source researc
   CTA gradients) with zero behavior change — safety surfaces, verbatim copy, testids,
   and roles untouched (D15); PWA manifest/icons/theme-color retinted to terracotta.
   README roadmap flipped to Complete with evidence; CHANGELOG updated.
-- **Stage 7 — In progress; sub-stage 7a Complete:** `reframe.evaluation` —
+- **Stage 7 — In progress; sub-stages 7a + 7b Complete:** `reframe.evaluation` —
   the six pre-specified (design, not validated-published) AE types +
   `AE_DEFINITIONS`, the frozen fail-closed `AdverseEvent` record (locator-only
   `reference`, D2 seriousness, computed 48-hour follow-up marker), pure
@@ -220,21 +245,25 @@ before or alongside professional care. Grounded in a verified 147-source researc
   loading), and `reframe.api.evaluation` (`GET/POST /evaluation/adverse-events`
   + followup, generic 422/404 details only). `create_service` always builds the
   log (`app.state.ae_log`), the check-in route appends the automatic event, and
-  `DELETE /checkins` never touches AE records. 7a evidence: 801 backend tests at
-  100% coverage (104 new), ruff/format/mypy clean, OpenAPI regenerated
-  deterministically with the three new `/evaluation/*` operations, web gates +
-  E2E 31/31 green; `docs/evaluation-harness.md` documents the taxonomy. Still
-  planned: 7b (metrics, progression criteria, report, `GET /evaluation/report`,
-  CLI `--report`/`--audit`) and 7c (report UI).
-- **Test suite:** backend 801 tests at 100% statement and branch coverage; web 373
+  `DELETE /checkins` never touches AE records. 7b added `reframe.evaluation`
+  (pilot metrics over the 28-day default / 7–90 bounded ISO-week window,
+  the four green/amber/red progression criteria E6 + not-evaluable table E4,
+  the feasibility report dataclass carrying `NON_EFFICACY_BANNER` verbatim),
+  `reframe.safety.audit_corpus` (12 seeded probes, honest recall/misses),
+  `GET /evaluation/report` (ids/counts/statuses only), and CLI
+  `--report` / `--audit` / `--record-audit-misses` (miss digests only).
+  Evidence: 911 backend tests at 100% coverage (110 new), ruff/format/mypy
+  clean, OpenAPI regenerated deterministically with `/evaluation/report`
+  additive, web gates + E2E 31/31 green; `docs/evaluation-harness.md`
+  documents the taxonomy and the pilot report. Still planned: 7c (report UI).
+- **Test suite:** backend 911 tests at 100% statement and branch coverage; web 373
   frontend tests at 99.09% statements / 94.96% branches; 31 Playwright E2E specs (21
   keyless safety specs unchanged + 5 axe + 3 generated-turn + 2 PWA offline), axe zero
   violations on all five routes; CI green
   (ruff, mypy strict, Python 3.12 + 3.14 matrix, gitleaks).
-- **Next: Stage 7 sub-stage 7b** — evaluation-harness continuation:
-  feasibility-pilot instrumentation and reporting (metrics, progression
-  criteria, structured report), then 7c report UI, per the README roadmap
-  table. Stage 8 — Android client
+- **Next: Stage 7 sub-stage 7c** — evaluation-harness continuation:
+  the report UI over the existing `GET /evaluation/report` JSON (per the README
+  roadmap table). Stage 8 — Android client
   follows after, reusing the proven API (D2/D3: web-first, then native; `--static`
   serving also means the same API process can serve a webview-backed client directly).
   Open items carried: none on SCS-SF — its item wording was verified against the

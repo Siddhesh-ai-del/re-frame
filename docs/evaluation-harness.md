@@ -1,11 +1,13 @@
-# Evaluation harness — adverse-event logging (Stage 7a)
+# Evaluation harness — adverse-event logging and feasibility reporting (Stages 7a + 7b)
 
 Safety-monitoring instrumentation for the RE:FRAME feasibility pilot. This
-document covers what Stage 7a delivers: the pre-specified adverse-event (AE)
-taxonomy, the fail-closed AE log (in-memory + durable SQLite), the automatic
-and audit detectors, and the `/evaluation/adverse-events` API. Pilot metrics,
-progression criteria, and the feasibility report are Stage 7b (planned, not
-built); the report UI is Stage 7c (planned, not built).
+document covers what Stages 7a and 7b deliver: the pre-specified
+adverse-event (AE) taxonomy, the fail-closed AE log (in-memory + durable
+SQLite), the automatic and audit detectors, the `/evaluation/*` API, the
+feasibility-pilot metrics and pre-specified progression criteria, and the
+feasibility report (JSON API + markdown CLI) with the packaged audit
+corpus behind `--audit`. The report **web UI** is Stage 7c (planned, not
+built).
 
 ## Honest framing: pre-specified DESIGN definitions
 
@@ -49,8 +51,10 @@ Every record carries exactly one source (**D4**):
 - **`audit`** — a seeded-corpus audit miss: a crisis-class text the
   classifier failed to flag, detected before any participant impact
   (a near-miss). Each `AuditReport` miss becomes one
-  `crisis_response_failure` event. The converter is pure and tested now;
-  the CLI that will invoke it (`--audit`) is Stage 7b (planned).
+  `crisis_response_failure` event. The converter is pure
+  (`audit_miss_events`), and the stage-7b CLI `--audit` flag invokes it —
+  optionally recording misses durably with `--record-audit-misses`
+  (deduplicated by reference).
 - **`review`** — entered by a pilot reviewer over HTTP. The
   `POST /evaluation/adverse-events` endpoint always stamps
   `source="review"` server-side; the client cannot set or spoof a source
@@ -100,7 +104,7 @@ adverse-event records. Purging journal data cannot silently destroy safety
 records — the two stores are separate (separate tables, separate
 connections), and no code path couples them.
 
-## API surface (Stage 7a)
+## API surface (Stages 7a + 7b)
 
 All routes live under the `/evaluation/*` namespace (the SPA owns none of
 them) and return operational safety-monitoring data, never clinical
@@ -111,18 +115,143 @@ claims:
 | `GET /evaluation/adverse-events` | Every logged event in insertion order (`AdverseEventListOut`). |
 | `POST /evaluation/adverse-events` | Record one reviewer event; `source` always `review`; `serious` optional (taxonomy default when omitted); 422 with one generic detail on any failure. |
 | `POST /evaluation/adverse-events/{event_id}/followup` | Mark the follow-up completed; unknown id → 404 with one generic detail. |
+| `GET /evaluation/report` | The structured feasibility report (`ReportOut`): banner, window, metrics, AE rollups, four evaluated criteria. Query params: `start`, `end` (ISO dates), `expected_per_week` (≥ 1), `planned`, `enrolled` (both or neither). |
 
 Error mapping is deliberately boring: one generic 422 detail for every
 record-level failure (unknown type, invalid reference, duplicate id) and
 one generic 404 detail for unknown ids — no internals leak either way.
+On the report route, the single generic 422 detail
+(`Report parameters are invalid.`) covers both an explicit window whose
+start is after its end and `planned` without `enrolled` (or the reverse);
+`expected_per_week=0` never reaches the handler (FastAPI's own query
+validation rejects it).
 
-## Planned next (not built in 7a)
+---
 
-- **Stage 7b** — feasibility-pilot metrics (retention, data completeness,
-  safety-event rate), pre-specified green/amber/red progression criteria
-  (provisional, cited), a structured feasibility report with an explicit
-  non-efficacy banner, `GET /evaluation/report`, and CLI `--report` /
-  `--audit` flags.
+# Stage 7b — pilot metrics, progression criteria, feasibility report
+
+## Observation window and ISO weeks (E2, E3)
+
+- **Window resolution (E2):** explicit `start`/`end` params win; otherwise
+  the window is the data span (min/max over check-in dates ∪ adverse-event
+  `detected_at` dates); with neither, there is no window and most metrics
+  are `null` / "not evaluable". An explicit `start > end` is a `ValueError`
+  mapped to the generic 422. Bounds are both-or-none on the wire.
+- **ISO calendar weeks (E3) everywhere:** `total_weeks` is the number of
+  distinct ISO `(isoyear, isoweek)` pairs spanned by the window — computed
+  by stepping day-by-day, so a window crossing a year boundary
+  (e.g. 2026-12-28 → 2027-01-05) counts 2 weeks. `active_weeks` counts
+  distinct ISO weeks containing ≥ 1 in-window check-in. Retention =
+  `active_weeks / total_weeks`; data completeness = in-window check-ins ÷
+  (`total_weeks × expected_per_week`) — a raw ratio, **not** capped at 1.0.
+
+## The four progression criteria (E6)
+
+Thresholds are **provisional RE:FRAME design defaults pending pilot
+validation**; bands are **operational review statuses**, never safety or
+efficacy judgments. Boundaries are inclusive (`green ≥ x`, `amber ≥ y`):
+
+| Key | Label | Green | Amber | Red | Thresholds |
+|---|---|---|---|---|---|
+| `recruitment` | Recruitment (protocol-level input) | ≥ 100% of planned participants enrolled | ≥ 75% of planned | < 75% of planned | (1.00, 0.75) of planned |
+| `retention` | Retention (engagement across the window) | ≥ 70% of window weeks active (≥ 1 check-in) | ≥ 50% | < 50% | (0.70, 0.50) |
+| `data_completeness` | Check-in data completeness | ≥ 80% of expected check-ins recorded | ≥ 60% | < 60% | (0.80, 0.60) |
+| `safety_event_rate` | Safety events (pre-specified class review) | no escalation-pathway failures, no overdue serious follow-ups, only expected monitoring-signal events (or none) | content-class events logged, or any serious event (all serious follow-ups on time) | any crisis-response failure or inappropriate/delayed escalation, or any serious follow-up overdue past 48 hours | **class-based, never numeric (E5)** |
+
+Each criterion carries its justification and verified citation in the
+report (recruitment: *Determining sample size for pilot trials: a
+tutorial*; Julious 2005 DOI 10.1002/pst.185 for the 12/arm floor; DOI
+10.1186/s40814-025-01675-9 for the flat-rules-of-thumb caveat — the target
+must be justified against this pilot's population. Retention anchors inside
+the published range: Linardon et al. 2026 (~84% derived, protocolized
+iCBT) vs. Youper week-4 42.66% (commercial chatbot, paying subscribers —
+different product and pricing models, not directly comparable). The
+`docs`-level rule: thresholds are operator-overridable cadence/protocol
+inputs, never presented as published standards.
+
+## Not-evaluable rules (E4, exact)
+
+Missing inputs are never rendered as zeros or passes:
+
+| Criterion | Not evaluable when | Label |
+|---|---|---|
+| recruitment | planned/enrolled not both provided | `not evaluable — planned/enrolled counts not provided` |
+| retention | no check-ins recorded at all (any date) | `not evaluable — no check-ins recorded` |
+| data_completeness | same as retention | `not evaluable — no check-ins recorded` |
+| safety_event_rate | no check-ins **and** no events recorded at all | `not evaluable — no check-ins or events recorded` |
+
+A real window with zero **in-window** check-ins (observation happened) is a
+genuine `0.0` (red), not not-evaluable.
+
+## Safety banding is class-based, never rate-based (E5)
+
+First match wins, over **in-window** events:
+
+1. any `crisis_response_failure` or `inappropriate_or_delayed_escalation`
+   → **red** (escalation-pathway failure — halt-and-review);
+2. any serious event with the 48-hour follow-up past due and uncompleted →
+   **red**;
+3. any content-class event (`hallucinated_clinical_claim`,
+   `boundary_violation_diagnosis`, `sycophancy_episode`) or any serious
+   event (all follow-ups on time) → **amber**;
+4. otherwise → **green** (only expected monitoring-signal events or none).
+
+**Non-convertibility honesty note:** participant-level base rates (6.7%
+deterioration, Linardon et al. 2024 DOI 10.1038/s41746-024-01388-y; 8.3%
+mindfulness adverse events, Farias et al. 2020 DOI 10.1111/acps.13225) are
+**indicative context only** — they are NOT progression thresholds and NOT
+convertible to instance-level event rates. The band is determined by the
+pre-specified classes and the 48-hour timeline, never by comparing the
+observed rate to a published base rate.
+
+## Report surfaces (E1)
+
+Every report — JSON or markdown — embeds the banner **verbatim**:
+
+> Feasibility report — operational feasibility parameters only. This
+> evaluation was not designed or powered to support any efficacy claim;
+> scores, rates, and counts here are descriptive operational data, not
+> clinical findings. No diagnostic or treatment claims are made.
+
+No message content appears in any report (D1): event rollups are ids and
+counts only; check-ins are read through the public tracker API per active
+instrument (E9).
+
+**JSON API:**
+
+```bash
+curl 'http://127.0.0.1:8000/evaluation/report'
+curl 'http://127.0.0.1:8000/evaluation/report?start=2026-10-01&end=2026-12-31&planned=40&enrolled=38&expected_per_week=1'
+```
+
+**CLI (offline, markdown; E7 — no settings load, no LLM key, no port):**
+
+```bash
+python -m reframe.cli --report --db reframe.db     # read-only: never creates a missing file
+python -m reframe.cli --audit                      # recall summary over the packaged corpus
+python -m reframe.cli --audit --record-audit-misses --db reframe.db  # deduplicated by reference
+```
+
+`--audit` is informational and exits 0 regardless (E8); the CI guarantee is
+`tests/test_safety_audit_corpus.py` asserting the packaged corpus meets
+`MINIMUM_CRISIS_RECALL = 1.0`. A genuinely missed probe is reported to the
+lead — the classifier and the threshold are never weakened to make a row
+pass.
+
+## Packaged audit corpus (E7/E8 honesty)
+
+`reframe.safety.audit_corpus` (the sole addition under `safety/`) packages
+~12 synthetic, hand-written, deliberately **plain** (non-adversarial)
+probes across the classifier's five expected classes — ≥ 3 crisis, ≥ 2
+psychosis/mania, ≥ 1 trauma, ≥ 1 diagnosis, ≥ 3 none. It is a smoke-level
+self-check an operator can run from the CLI, **not** an exhaustive
+evaluation; the authoritative recall gate is the test suite, which also
+asserts every row classifies exactly as expected under the current
+deterministic classifier. No probe text derives from any participant, and
+the existing test suites keep their own independent, harder corpora.
+
+## Planned next (not built yet)
+
 - **Stage 7c** — web UI for the pilot report surface, with progression
   criteria rendered as text labels only (never red/amber/green risk color
   fills).

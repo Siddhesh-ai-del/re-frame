@@ -56,7 +56,7 @@ The full research base, caveats (including what remains uncertain), and the safe
 | Stage 4 | Measurement: validated self-report instruments (K-10, PHQ-9, GAD-7, SCS-SF), scoring, and longitudinal tracking | **Complete** |
 | Stage 5 | API service (FastAPI) exposing the conversation pipeline and measurement endpoints | **Complete** |
 | Stage 6 | Web application: chat interface, onboarding, tracking views, PWA — built and tested end-to-end before any native client | **Complete** (5-route web app, PWA with offline shell, `--static` serving from FastAPI, mock-LLM generated-turn E2E, zero-violation axe pass) |
-| Stage 7 | Evaluation harness: adverse-event logging, feasibility-pilot instrumentation and reporting | Planned |
+| Stage 7 | Evaluation harness: adverse-event logging, feasibility-pilot instrumentation and reporting | **Complete** (7a+7b: pre-specified AE taxonomy + fail-closed adverse-event log (SQLite), automatic/audit/review detection, pilot metrics, pre-specified green/amber/red progression criteria, feasibility report with a non-efficacy banner via `GET /evaluation/report` + CLI `--report`/`--audit`; report UI planned as 7c) |
 | Stage 8 | Android client, reusing the proven API (after the web app is tested end-to-end) | Planned |
 
 Each stage follows test-driven development (tests first, 100% statement and branch coverage gate) and is pushed only after its stage tests pass with green CI.

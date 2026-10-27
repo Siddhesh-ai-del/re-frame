@@ -28,6 +28,14 @@ LLM key policy, driven by the actual ``reframe.config`` behavior:
   the composed service mounts it last, so every registered API route wins and
   unknown GETs fall through to ``index.html``.
 
+Offline commands (stage 7b, E7): ``--report`` prints the feasibility report
+(markdown) for ``--db`` and exits; ``--audit`` runs the crisis self-audit over
+the packaged seeded corpus and exits (with ``--record-audit-misses``, audit
+misses are durably recorded to ``--db``, deduplicated by reference). Both
+branch BEFORE ``load_settings()`` — no LLM key, no settings load, no port
+bind, no server — and ``--report`` never creates a missing database file
+(read-only tool).
+
 ``uvicorn`` is imported lazily inside :func:`_run_uvicorn` — the seam tests
 monkeypatch instead of starting a server — so importing this module never
 pulls in server machinery.
@@ -43,12 +51,22 @@ from fastapi import FastAPI
 from reframe.api.service import create_service
 from reframe.config import load_settings
 from reframe.content import ExerciseModule
+from reframe.evaluation.adverse_events import AdverseEvent
+from reframe.evaluation.detectors import audit_miss_events
+from reframe.evaluation.log import AdverseEventLog, PersistentAdverseEventLog
+from reframe.evaluation.report import build_report, checkins_from_tracker, to_markdown
+from reframe.evaluation.store import SqliteAdverseEventStore
 from reframe.generation import (
     ConstrainedGenerator,
     GenerationError,
     GenerationResult,
     OpenAICompatibleClient,
 )
+from reframe.measurement.persistent import PersistentCheckInTracker
+from reframe.measurement.store import SqliteCheckInStore
+from reframe.measurement.tracker import CheckInTracker
+from reframe.safety.audit import run_crisis_audit
+from reframe.safety.audit_corpus import AUDIT_CORPUS
 
 #: v1 endpoint defaults for the OpenAI-compatible API (overridable via config).
 LLM_BASE_URL = "https://api.openai.com/v1"
@@ -101,6 +119,21 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="DIR",
         help="directory with the built SPA (web/dist) to serve from the API app",
     )
+    parser.add_argument(
+        "--report",
+        action="store_true",
+        help="print the feasibility report (markdown) for --db and exit",
+    )
+    parser.add_argument(
+        "--audit",
+        action="store_true",
+        help="run the crisis self-audit over the packaged seeded corpus and exit",
+    )
+    parser.add_argument(
+        "--record-audit-misses",
+        action="store_true",
+        help="with --audit: record audit misses to the --db adverse-event log (deduplicated)",
+    )
     return parser
 
 
@@ -115,23 +148,97 @@ def _run_uvicorn(app: FastAPI, *, host: str, port: int, log_level: str) -> None:
     uvicorn.run(app, host=host, port=port, log_level=log_level)
 
 
+def _run_offline(args: argparse.Namespace) -> int:
+    """Run the requested offline command(s) and return 0 (E7).
+
+    Never calls ``load_settings``, never builds the generator, never binds a
+    port. The audit (if requested) runs FIRST, then the report (if
+    requested). ``--report`` on a missing ``--db`` file reports on a bare
+    in-memory tracker/log and does NOT create the file (read-only tool);
+    ``--record-audit-misses`` legitimately creates it — it records NEW safety
+    records (E7). Failures from a malformed database propagate loudly.
+    """
+    if args.audit:
+        audit_report = run_crisis_audit(AUDIT_CORPUS)
+        print(f"probes: {audit_report.total}")
+        print(f"recall: {audit_report.recall:.0%}")
+        print(f"misses: {len(audit_report.misses)}")
+        miss_events = audit_miss_events(audit_report)
+        for event in miss_events:
+            print(event.reference)
+        if args.record_audit_misses:
+            recorded, skipped = _record_audit_misses(args.db, miss_events)
+            print(f"recorded: {recorded}")
+            print(f"skipped: {skipped}")
+
+    if args.report:
+        db_path = Path(args.db)
+        if db_path.exists():
+            checkin_store = SqliteCheckInStore(db_path)
+            tracker: CheckInTracker = PersistentCheckInTracker(checkin_store)
+            ae_store = SqliteAdverseEventStore(db_path)
+            ae_log: AdverseEventLog = PersistentAdverseEventLog(ae_store)
+            report = build_report(checkins_from_tracker(tracker), ae_log.events())
+            checkin_store.close()
+            ae_store.close()
+        else:
+            report = build_report(
+                checkins_from_tracker(CheckInTracker()), AdverseEventLog().events()
+            )
+        print(to_markdown(report))
+    return 0
+
+
+def _record_audit_misses(db_path: str, events: tuple[AdverseEvent, ...]) -> tuple[int, int]:
+    """Durably record audit-miss events to ``db_path``, deduplicated by reference.
+
+    Args:
+        db_path: SQLite path for the adverse-event store (created if absent —
+            recording NEW safety records is the explicit purpose here).
+        events: The miss events to record (``audit_miss_events`` output).
+
+    Returns:
+        ``(recorded, skipped)`` — appended this run vs. already present.
+    """
+    store = SqliteAdverseEventStore(db_path)
+    log = PersistentAdverseEventLog(store)
+    existing = {event.reference for event in log.events()}
+    recorded = 0
+    skipped = 0
+    for event in events:
+        if event.reference in existing:
+            skipped += 1
+        else:
+            log.append(event)
+            recorded += 1
+    store.close()
+    return recorded, skipped
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Parse ``argv`` (default: ``sys.argv[1:]``), compose the service, serve.
 
-    Exit codes: ``0`` after the server returns; ``2`` when the configuration
-    is rejected (fail closed — nothing is served). Out-of-range ports abort
-    through argparse's own ``SystemExit(2)`` before anything is built.
+    Exit codes: ``0`` after the server returns (or an offline command runs);
+    ``2`` when the configuration is rejected (fail closed — nothing is
+    served). Out-of-range ports abort through argparse's own ``SystemExit(2)``
+    before anything is built.
 
     Args:
         argv: Argument vector WITHOUT the program name; ``None`` reads sys.argv.
 
     Returns:
-        ``0`` once serving finishes; ``2`` for a rejected configuration.
+        ``0`` once serving finishes or an offline command completes; ``2`` for
+        a rejected configuration.
     """
     parser = _build_parser()
     args = parser.parse_args(argv)
     if not 1 <= args.port <= 65535:
         parser.error(f"--port must be between 1 and 65535 (got {args.port})")
+    if args.record_audit_misses and not args.audit:
+        parser.error("--record-audit-misses requires --audit")
+    if args.audit or args.report:
+        # E7: offline — no settings, no generator, no port, no server.
+        return _run_offline(args)
 
     try:
         settings = load_settings()

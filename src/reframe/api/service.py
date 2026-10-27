@@ -10,7 +10,8 @@ adverse-event log: a log is ALWAYS built (durable when ``db_path`` is given,
 in-memory otherwise), attached to ``app.state.ae_log``, and wired into BOTH
 the check-in route (early-worsening detection) and the
 ``/evaluation/adverse-events`` endpoints — the product path can never
-silently skip safety recording (D8).
+silently skip safety recording (D8). Stage 7b adds ``GET /evaluation/report``
+over the same tracker and log, reading through public APIs only.
 
 Static serving (stage 6e): when ``static_dir`` points at a directory (the
 built SPA in ``web/dist``), a ``StaticFiles`` mount with an ``index.html``
@@ -37,6 +38,7 @@ from starlette.staticfiles import StaticFiles
 from reframe.api.app import create_app
 from reframe.api.evaluation import include_evaluation_routes
 from reframe.api.measure import include_measurement_routes
+from reframe.api.report import include_report_routes
 from reframe.content import default_library
 from reframe.evaluation.log import AdverseEventLog, PersistentAdverseEventLog
 from reframe.evaluation.store import SqliteAdverseEventStore
@@ -131,6 +133,7 @@ def create_service(
 
     include_measurement_routes(app, tracker, ae_log)
     include_evaluation_routes(app, ae_log)
+    include_report_routes(app, tracker, ae_log)
     app.state.store = store
     app.state.ae_log = ae_log
     app.state.ae_store = ae_store

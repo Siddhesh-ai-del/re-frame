@@ -307,6 +307,116 @@
           }
         }
       }
+    },
+    "/evaluation/report": {
+      "get": {
+        "summary": "Evaluation Report",
+        "description": "Assemble the feasibility report (operational parameters only).",
+        "operationId": "evaluation_report_evaluation_report_get",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End"
+            }
+          },
+          {
+            "name": "expected_per_week",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Expected Per Week"
+            }
+          },
+          {
+            "name": "planned",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Planned"
+            }
+          },
+          {
+            "name": "enrolled",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Enrolled"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -428,6 +538,61 @@
         ],
         "title": "AdverseEventOut",
         "description": "One logged adverse event on the wire: metadata and locators only (D1)."
+      },
+      "AeSummaryOut": {
+        "properties": {
+          "in_window": {
+            "type": "integer",
+            "title": "In Window"
+          },
+          "per_week": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Per Week"
+          },
+          "by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Type"
+          },
+          "by_source": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Source"
+          },
+          "serious_in_window": {
+            "type": "integer",
+            "title": "Serious In Window"
+          },
+          "overdue_serious_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Overdue Serious Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "in_window",
+          "per_week",
+          "by_type",
+          "by_source",
+          "serious_in_window",
+          "overdue_serious_ids"
+        ],
+        "title": "AeSummaryOut",
+        "description": "In-window adverse-event rollups: ids and counts only (D1)."
       },
       "AnswerOptionOut": {
         "properties": {
@@ -650,6 +815,107 @@
         "title": "CheckInRequest",
         "description": "Inbound check-in body: known-shape fields only, strict ISO date."
       },
+      "ConfigOut": {
+        "properties": {
+          "expected_per_week": {
+            "type": "integer",
+            "title": "Expected Per Week"
+          },
+          "planned_participants": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Participants"
+          },
+          "enrolled_participants": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enrolled Participants"
+          }
+        },
+        "type": "object",
+        "required": [
+          "expected_per_week",
+          "planned_participants",
+          "enrolled_participants"
+        ],
+        "title": "ConfigOut",
+        "description": "The report configuration as submitted/defaulted."
+      },
+      "CriterionOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Band"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "value_label": {
+            "type": "string",
+            "title": "Value Label"
+          },
+          "basis": {
+            "type": "string",
+            "title": "Basis"
+          },
+          "justification": {
+            "type": "string",
+            "title": "Justification"
+          },
+          "citation": {
+            "type": "string",
+            "title": "Citation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "band",
+          "value",
+          "value_label",
+          "basis",
+          "justification",
+          "citation"
+        ],
+        "title": "CriterionOut",
+        "description": "One evaluated progression criterion as the UI needs it."
+      },
       "ExerciseListOut": {
         "properties": {
           "exercises": {
@@ -871,6 +1137,164 @@
         "title": "InstrumentOut",
         "description": "Full instrument specification on the wire, enough to render a form."
       },
+      "MetricsOut": {
+        "properties": {
+          "window_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window Start"
+          },
+          "window_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window End"
+          },
+          "total_weeks": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Weeks"
+          },
+          "checkins_in_window": {
+            "type": "integer",
+            "title": "Checkins In Window"
+          },
+          "active_weeks": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Weeks"
+          },
+          "retention": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retention"
+          },
+          "data_completeness": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Completeness"
+          },
+          "expected_checkins": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Checkins"
+          },
+          "adverse_events_in_window": {
+            "type": "integer",
+            "title": "Adverse Events In Window"
+          },
+          "adverse_events_per_week": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adverse Events Per Week"
+          }
+        },
+        "type": "object",
+        "required": [
+          "window_start",
+          "window_end",
+          "total_weeks",
+          "checkins_in_window",
+          "active_weeks",
+          "retention",
+          "data_completeness",
+          "expected_checkins",
+          "adverse_events_in_window",
+          "adverse_events_per_week"
+        ],
+        "title": "MetricsOut",
+        "description": "Mirror of ``PilotMetrics`` on the wire (str/float/int or null)."
+      },
+      "ReportOut": {
+        "properties": {
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "banner": {
+            "type": "string",
+            "title": "Banner"
+          },
+          "window": {
+            "$ref": "#/components/schemas/WindowOut"
+          },
+          "config": {
+            "$ref": "#/components/schemas/ConfigOut"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/MetricsOut"
+          },
+          "adverse_events": {
+            "$ref": "#/components/schemas/AeSummaryOut"
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/CriterionOut"
+            },
+            "type": "array",
+            "title": "Criteria"
+          }
+        },
+        "type": "object",
+        "required": [
+          "generated_at",
+          "banner",
+          "window",
+          "config",
+          "metrics",
+          "adverse_events",
+          "criteria"
+        ],
+        "title": "ReportOut",
+        "description": "The complete feasibility report on the wire."
+      },
       "ResourceOut": {
         "properties": {
           "name": {
@@ -977,6 +1401,51 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WindowOut": {
+        "properties": {
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "weeks": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weeks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "weeks"
+        ],
+        "title": "WindowOut",
+        "description": "The resolved observation window (both bounds and weeks are both-or-none)."
       }
     }
   }
